@@ -6,38 +6,73 @@ import {
   StyleSheet,
   SafeAreaView,
   StatusBar,
+  Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { EmailAuthModal } from "./EmailAuthModal";
 import { PhoneAuthModal } from "./PhoneAuthModal";
+import { AuthService } from "../services/authService";
 
 interface SignInScreenProps {
-  onSignIn: (username: string) => void;
+  onSignIn: (username: string, userProfile: any) => void;
 }
 
 export function SignInScreen({ onSignIn }: SignInScreenProps) {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [loading, setLoading] = useState<string | null>(null);
 
-  const handleEmailAuth = (emailUsername: string) => {
-    onSignIn(emailUsername);
+  const handleEmailAuth = async (email: string, password: string, username?: string) => {
+    try {
+      setLoading("email");
+      const { user, profile } = await AuthService.signInWithEmail(email, password, username);
+      onSignIn(profile.username, profile);
+      setShowEmailModal(false);
+    } catch (error: any) {
+      Alert.alert("Authentication Error", error.message);
+    } finally {
+      setLoading(null);
+    }
   };
 
-  const handlePhoneAuth = (phoneUsername: string) => {
-    onSignIn(phoneUsername);
+  const handlePhoneAuth = async (phoneNumber: string, verificationCode: string, username: string) => {
+    try {
+      setLoading("phone");
+      // In a real implementation, you would first send SMS and get verification ID
+      // For now, we'll simulate the process
+      const { user, profile } = await AuthService.signInWithPhone(phoneNumber);
+      onSignIn(profile.username, profile);
+      setShowPhoneModal(false);
+    } catch (error: any) {
+      Alert.alert("Authentication Error", error.message);
+    } finally {
+      setLoading(null);
+    }
   };
 
-  const handleGoogleAuth = () => {
-    // Simulate Google authentication
-    const randomUsername = "GoogleUser" + Math.floor(Math.random() * 1000);
-    onSignIn(randomUsername);
+  const handleGoogleAuth = async () => {
+    try {
+      setLoading("google");
+      const { user, profile } = await AuthService.signInWithGoogle();
+      onSignIn(profile.username, profile);
+    } catch (error: any) {
+      Alert.alert("Authentication Error", error.message);
+    } finally {
+      setLoading(null);
+    }
   };
 
-  const handleAppleAuth = () => {
-    // Simulate Apple authentication  
-    const randomUsername = "AppleUser" + Math.floor(Math.random() * 1000);
-    onSignIn(randomUsername);
+  const handleAppleAuth = async () => {
+    try {
+      setLoading("apple");
+      const { user, profile } = await AuthService.signInWithApple();
+      onSignIn(profile.username, profile);
+    } catch (error: any) {
+      Alert.alert("Authentication Error", error.message);
+    } finally {
+      setLoading(null);
+    }
   };
 
   return (
