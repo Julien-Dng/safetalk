@@ -15,13 +15,14 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Import contexts
+import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { UserProvider, useUser } from './src/context/UserContext';
+import { ChatProvider, useChat } from './src/context/ChatContext';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
-
-// Mock authentication state
-const AuthContext = React.createContext({});
 
 // Colors and styles
 const COLORS = {
@@ -37,8 +38,36 @@ const COLORS = {
   border: '#C6C6C8',
 };
 
-// Welcome Screen
+// Welcome Screen with Firebase Auth integration
 const WelcomeScreen = ({ navigation }) => {
+  const { signInWithGoogle, signInWithApple, signInWithEmail, signInWithPhone, loading } = useAuth();
+
+  const handleGoogleSignIn = async () => {
+    const result = await signInWithGoogle();
+    if (result.success) {
+      navigation.navigate('Main');
+    } else {
+      Alert.alert('Sign In Error', result.error);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    const result = await signInWithApple();
+    if (result.success) {
+      navigation.navigate('Main');
+    } else {
+      Alert.alert('Sign In Error', result.error);
+    }
+  };
+
+  const handleEmailSignIn = () => {
+    navigation.navigate('EmailAuth');
+  };
+
+  const handlePhoneSignIn = () => {
+    navigation.navigate('PhoneAuth');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
@@ -55,7 +84,8 @@ const WelcomeScreen = ({ navigation }) => {
         <View style={styles.authButtons}>
           <TouchableOpacity
             style={[styles.authButton, { backgroundColor: '#4285F4' }]}
-            onPress={() => navigation.navigate('Main')}
+            onPress={handleGoogleSignIn}
+            disabled={loading}
           >
             <Ionicons name="logo-google" size={24} color="white" />
             <Text style={styles.authButtonText}>Continue with Google</Text>
@@ -63,7 +93,8 @@ const WelcomeScreen = ({ navigation }) => {
 
           <TouchableOpacity
             style={[styles.authButton, { backgroundColor: '#000000' }]}
-            onPress={() => navigation.navigate('Main')}
+            onPress={handleAppleSignIn}
+            disabled={loading}
           >
             <Ionicons name="logo-apple" size={24} color="white" />
             <Text style={styles.authButtonText}>Continue with Apple</Text>
@@ -71,7 +102,8 @@ const WelcomeScreen = ({ navigation }) => {
 
           <TouchableOpacity
             style={[styles.authButton, { backgroundColor: COLORS.success }]}
-            onPress={() => navigation.navigate('Main')}
+            onPress={handlePhoneSignIn}
+            disabled={loading}
           >
             <Ionicons name="call" size={24} color="white" />
             <Text style={styles.authButtonText}>Continue with Phone</Text>
@@ -79,7 +111,8 @@ const WelcomeScreen = ({ navigation }) => {
 
           <TouchableOpacity
             style={[styles.authButton, { backgroundColor: COLORS.secondary }]}
-            onPress={() => navigation.navigate('Main')}
+            onPress={handleEmailSignIn}
+            disabled={loading}
           >
             <Ionicons name="mail" size={24} color="white" />
             <Text style={styles.authButtonText}>Continue with Email</Text>
@@ -89,34 +122,67 @@ const WelcomeScreen = ({ navigation }) => {
         <Text style={styles.termsText}>
           By continuing, you agree to our Terms of Service and Privacy Policy
         </Text>
+
+        {loading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+          </View>
+        )}
       </View>
     </SafeAreaView>
   );
 };
 
-// Home Screen
+// Home Screen with real business logic integration
 const HomeScreen = ({ navigation }) => {
-  const [timeRemaining, setTimeRemaining] = useState(15 * 60); // 15 minutes in seconds
-  const [credits, setCredits] = useState(5);
+  const { user } = useUser();
+  const { dailyTimer, credits, getRemainingTime, hasTimeAvailable } = useUser();
+  const [timeRemaining, setTimeRemaining] = useState(0);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeRemaining(prev => Math.max(0, prev - 1));
-    }, 1000);
+    if (dailyTimer) {
+      const remaining = getRemainingTime();
+      setTimeRemaining(remaining);
 
-    return () => clearInterval(timer);
-  }, []);
+      const timer = setInterval(() => {
+        const newRemaining = getRemainingTime();
+        setTimeRemaining(newRemaining);
+      }, 1000);
 
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+      return () => clearInterval(timer);
+    }
+  }, [dailyTimer, getRemainingTime]);
+
+  const formatTime = (milliseconds) => {
+    if (milliseconds === Infinity) return '∞';
+    
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   const getTimerColor = () => {
-    if (timeRemaining <= 60) return COLORS.danger;
-    if (timeRemaining <= 180) return COLORS.warning;
+    if (timeRemaining === Infinity) return COLORS.success;
+    if (timeRemaining <= 60000) return COLORS.danger; // 1 minute
+    if (timeRemaining <= 180000) return COLORS.warning; // 3 minutes
     return COLORS.primary;
+  };
+
+  const handleStartChat = () => {
+    if (hasTimeAvailable()) {
+      navigation.navigate('Matching');
+    } else {
+      Alert.alert(
+        'No Time Available',
+        'You have no free time or credits remaining. Please purchase credits or upgrade to premium.',
+        [
+          { text: 'Buy Credits', onPress: () => navigation.navigate('Credits') },
+          { text: 'Go Premium', onPress: () => navigation.navigate('Premium') },
+          { text: 'Cancel', style: 'cancel' }
+        ]
+      );
+    }
   };
 
   return (
@@ -130,13 +196,15 @@ const HomeScreen = ({ navigation }) => {
 
         {/* Timer Display */}
         <View style={styles.timerCard}>
-          <Text style={styles.timerLabel}>Time Remaining Today</Text>
+          <Text style={styles.timerLabel}>
+            {dailyTimer?.isPremium ? 'Premium - Unlimited' : 'Time Remaining Today'}
+          </Text>
           <View style={styles.progressBar}>
             <View 
               style={[
                 styles.progressFill, 
                 { 
-                  width: `${(timeRemaining / (20 * 60)) * 100}%`,
+                  width: dailyTimer?.isPremium ? '100%' : `${Math.max(0, (timeRemaining / (dailyTimer?.timeLimit || 1200000)) * 100)}%`,
                   backgroundColor: getTimerColor()
                 }
               ]} 
@@ -150,8 +218,8 @@ const HomeScreen = ({ navigation }) => {
         {/* Credits Display */}
         <View style={styles.creditsCard}>
           <Ionicons name="wallet" size={24} color={COLORS.secondary} />
-          <Text style={styles.creditsText}>{credits} Credits</Text>
-          <Text style={styles.creditsSubtext}>({credits * 6} minutes)</Text>
+          <Text style={styles.creditsText}>{credits?.totalCredits || 0} Credits</Text>
+          <Text style={styles.creditsSubtext}>({((credits?.totalCredits || 0) * 6)} minutes)</Text>
         </View>
 
         {/* Main Illustration */}
@@ -170,8 +238,8 @@ const HomeScreen = ({ navigation }) => {
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
           <TouchableOpacity
-            style={styles.startButton}
-            onPress={() => navigation.navigate('Matching')}
+            style={[styles.startButton, { opacity: hasTimeAvailable() ? 1 : 0.6 }]}
+            onPress={handleStartChat}
           >
             <Ionicons name="play" size={24} color="white" />
             <Text style={styles.startButtonText}>Start Chatting</Text>
@@ -198,26 +266,50 @@ const HomeScreen = ({ navigation }) => {
   );
 };
 
-// Matching Screen
+// Matching Screen with real matchmaking logic
 const MatchingScreen = ({ navigation }) => {
+  const { findPartner, skipPartner, isMatching, matchingSkips } = useChat();
   const [searchTime, setSearchTime] = useState(0);
-  const [skipCount, setSkipCount] = useState(2);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setSearchTime(prev => prev + 1);
-    }, 1000);
+    let searchTimer;
+    let matchingTimer;
 
-    // Simulate finding a match after some time
-    const matchTimer = setTimeout(() => {
-      navigation.navigate('Chat');
-    }, 5000);
+    if (isMatching) {
+      // Start search timer for UI
+      searchTimer = setInterval(() => {
+        setSearchTime(prev => prev + 1);
+      }, 1000);
+
+      // Start actual partner finding
+      findPartner().then(result => {
+        if (result.success && result.chat) {
+          navigation.navigate('Chat');
+        }
+      });
+    }
 
     return () => {
-      clearInterval(timer);
-      clearTimeout(matchTimer);
+      if (searchTimer) clearInterval(searchTimer);
+      if (matchingTimer) clearTimeout(matchingTimer);
     };
-  }, [navigation]);
+  }, [isMatching, findPartner, navigation]);
+
+  const handleSkip = async () => {
+    const result = await skipPartner();
+    
+    if (result.showAd) {
+      Alert.alert(
+        'Skip Limit Reached',
+        'You\'ve reached your skip limit. Watch an ad to continue or upgrade to premium for unlimited skips.',
+        [
+          { text: 'Watch Ad', onPress: () => {/* TODO: Show ad */} },
+          { text: 'Go Premium', onPress: () => navigation.navigate('Premium') },
+          { text: 'Cancel', style: 'cancel' }
+        ]
+      );
+    }
+  };
 
   const formatSearchTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -249,49 +341,32 @@ const MatchingScreen = ({ navigation }) => {
         </Text>
 
         <View style={styles.skipInfo}>
-          <Text style={styles.skipText}>Skips used: {skipCount}/5</Text>
-          {skipCount >= 3 && (
+          <Text style={styles.skipText}>Skips used: {matchingSkips}/5</Text>
+          {matchingSkips >= 3 && (
             <Text style={styles.skipWarning}>
-              {5 - skipCount} skips left before ad
+              {5 - matchingSkips} skips left before ad
             </Text>
           )}
         </View>
 
-        <View style={styles.tipsCard}>
-          <Text style={styles.tipsTitle}>💡 Tips while you wait</Text>
-          <Text style={styles.tip}>• Be respectful and kind to others</Text>
-          <Text style={styles.tip}>• Keep conversations appropriate</Text>
-          <Text style={styles.tip}>• Report inappropriate behavior</Text>
-          <Text style={styles.tip}>• Have fun and make new connections!</Text>
-        </View>
-
         <TouchableOpacity
           style={styles.skipButton}
-          onPress={() => {
-            if (skipCount < 5) {
-              setSkipCount(prev => prev + 1);
-            } else {
-              Alert.alert('Skip Limit', 'Watch an ad to continue skipping');
-            }
-          }}
+          onPress={handleSkip}
+          disabled={isMatching}
         >
           <Ionicons name="play-forward" size={20} color={COLORS.primary} />
-          <Text style={styles.skipButtonText}>Skip ({skipCount}/5)</Text>
+          <Text style={styles.skipButtonText}>Skip ({matchingSkips}/5)</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 };
 
-// Chat Screen
+// Chat Screen with real-time messaging
 const ChatScreen = ({ navigation }) => {
+  const { currentChat, messages, sendMessage, endChat, isTyping, setIsTyping } = useChat();
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState([
-    { id: 1, text: "Hey there! How's your day going? 😊", sender: 'other', time: '12:34' },
-    { id: 2, text: "Hi! It's been great, thanks for asking! How about yours?", sender: 'me', time: '12:35' },
-    { id: 3, text: "Pretty good! I love this app, it's so cool to meet random people 🌍", sender: 'other', time: '12:36' }
-  ]);
-  const [timeElapsed, setTimeElapsed] = useState(342); // 5:42
+  const [timeElapsed, setTimeElapsed] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -301,16 +376,16 @@ const ChatScreen = ({ navigation }) => {
     return () => clearInterval(timer);
   }, []);
 
-  const sendMessage = () => {
+  const handleSendMessage = async () => {
     if (message.trim()) {
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        text: message,
-        sender: 'me',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }]);
+      await sendMessage(message);
       setMessage('');
     }
+  };
+
+  const handleEndChat = async () => {
+    await endChat();
+    navigation.navigate('Home');
   };
 
   const formatTime = (seconds) => {
@@ -323,7 +398,7 @@ const ChatScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.chatHeader}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={handleEndChat}>
           <Ionicons name="arrow-back" size={24} color={COLORS.text} />
         </TouchableOpacity>
         <View style={styles.chatHeaderCenter}>
@@ -335,7 +410,7 @@ const ChatScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Timer Bar */}
+      {/* Timer Bar - placeholder for now */}
       <View style={styles.timerBar}>
         <View style={styles.timerBarHeader}>
           <Text style={styles.timerBarLabel}>Time Remaining</Text>
@@ -349,25 +424,19 @@ const ChatScreen = ({ navigation }) => {
       {/* Messages */}
       <ScrollView style={styles.messagesContainer} contentContainerStyle={styles.messagesContent}>
         {messages.map((msg) => (
-          <View key={msg.id} style={[
+          <View key={msg._id} style={[
             styles.messageRow,
-            msg.sender === 'me' ? styles.messageRowRight : styles.messageRowLeft
+            msg.user._id === currentChat?.participants[0] ? styles.messageRowRight : styles.messageRowLeft
           ]}>
             <View style={[
               styles.messageBubble,
-              msg.sender === 'me' ? styles.messageBubbleMe : styles.messageBubbleOther
+              msg.user._id === currentChat?.participants[0] ? styles.messageBubbleMe : styles.messageBubbleOther
             ]}>
               <Text style={[
                 styles.messageText,
-                msg.sender === 'me' ? styles.messageTextMe : styles.messageTextOther
+                msg.user._id === currentChat?.participants[0] ? styles.messageTextMe : styles.messageTextOther
               ]}>
                 {msg.text}
-              </Text>
-              <Text style={[
-                styles.messageTime,
-                msg.sender === 'me' ? styles.messageTimeMe : styles.messageTimeOther
-              ]}>
-                {msg.time}
               </Text>
             </View>
           </View>
@@ -379,12 +448,15 @@ const ChatScreen = ({ navigation }) => {
         <TextInput
           style={styles.messageInput}
           value={message}
-          onChangeText={setMessage}
+          onChangeText={(text) => {
+            setMessage(text);
+            setIsTyping(text.length > 0);
+          }}
           placeholder="Type a message..."
           placeholderTextColor={COLORS.textSecondary}
           multiline
         />
-        <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
+        <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
           <Ionicons name="send" size={20} color="white" />
         </TouchableOpacity>
       </View>
@@ -399,7 +471,7 @@ const ChatScreen = ({ navigation }) => {
           <Ionicons name="flag" size={20} color={COLORS.warning} />
           <Text style={[styles.chatActionText, { color: COLORS.warning }]}>Report</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.chatAction} onPress={() => navigation.navigate('Home')}>
+        <TouchableOpacity style={styles.chatAction} onPress={handleEndChat}>
           <Ionicons name="call-sharp" size={20} color={COLORS.textSecondary} />
           <Text style={styles.chatActionText}>End Chat</Text>
         </TouchableOpacity>
@@ -408,8 +480,10 @@ const ChatScreen = ({ navigation }) => {
   );
 };
 
-// Account Screen
+// Account Screen with real user data
 const AccountScreen = ({ navigation }) => {
+  const { user, credits } = useUser();
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.accountContainer}>
@@ -424,29 +498,31 @@ const AccountScreen = ({ navigation }) => {
               <Ionicons name="person" size={40} color={COLORS.textSecondary} />
             </View>
             <View style={styles.profileInfo}>
-              <Text style={styles.displayName}>SafeTalk User</Text>
-              <Text style={styles.userEmail}>user@example.com</Text>
-              <Text style={styles.userStatus}>🆓 Free User</Text>
+              <Text style={styles.displayName}>{user?.displayName || 'SafeTalk User'}</Text>
+              <Text style={styles.userEmail}>{user?.email || 'user@example.com'}</Text>
+              <Text style={styles.userStatus}>
+                {user?.isPremium ? '⭐ Premium User' : '🆓 Free User'}
+              </Text>
             </View>
           </View>
 
           {/* Stats */}
           <View style={styles.statsGrid}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>24</Text>
+              <Text style={styles.statValue}>{user?.stats?.totalChats || 0}</Text>
               <Text style={styles.statLabel}>Total Chats</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>127</Text>
+              <Text style={styles.statValue}>{user?.stats?.totalMessagesSent || 0}</Text>
               <Text style={styles.statLabel}>Messages Sent</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>4.8⭐</Text>
+              <Text style={styles.statValue}>{user?.stats?.averageRating || 0}⭐</Text>
               <Text style={styles.statLabel}>Average Rating</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>15</Text>
-              <Text style={styles.statLabel}>Credits Earned</Text>
+              <Text style={styles.statValue}>{credits?.totalCredits || 0}</Text>
+              <Text style={styles.statLabel}>Credits Available</Text>
             </View>
           </View>
         </View>
@@ -462,7 +538,7 @@ const AccountScreen = ({ navigation }) => {
               <Text style={styles.menuItemTitle}>Upgrade to Premium</Text>
               <Text style={styles.menuItemSubtitle}>Unlimited chat time + exclusive features</Text>
             </View>
-            <Text style={styles.newBadge}>NEW</Text>
+            {!user?.isPremium && <Text style={styles.newBadge}>NEW</Text>}
           </TouchableOpacity>
 
           <TouchableOpacity 
@@ -472,7 +548,7 @@ const AccountScreen = ({ navigation }) => {
             <Ionicons name="wallet" size={24} color={COLORS.primary} />
             <View style={styles.menuItemContent}>
               <Text style={styles.menuItemTitle}>Buy Credits</Text>
-              <Text style={styles.menuItemSubtitle}>5 credits available</Text>
+              <Text style={styles.menuItemSubtitle}>{credits?.totalCredits || 0} credits available</Text>
             </View>
           </TouchableOpacity>
 
@@ -480,7 +556,7 @@ const AccountScreen = ({ navigation }) => {
             <Ionicons name="people" size={24} color={COLORS.success} />
             <View style={styles.menuItemContent}>
               <Text style={styles.menuItemTitle}>Referrals</Text>
-              <Text style={styles.menuItemSubtitle}>2 friends referred</Text>
+              <Text style={styles.menuItemSubtitle}>Invite friends and earn credits</Text>
             </View>
           </TouchableOpacity>
 
@@ -497,7 +573,7 @@ const AccountScreen = ({ navigation }) => {
         <View style={styles.referralCard}>
           <Text style={styles.referralTitle}>Your Referral Code</Text>
           <View style={styles.referralCodeContainer}>
-            <Text style={styles.referralCode}>ST7X9K2M</Text>
+            <Text style={styles.referralCode}>{user?.referralCode || 'Loading...'}</Text>
             <TouchableOpacity style={styles.copyButton}>
               <Ionicons name="copy" size={20} color={COLORS.primary} />
             </TouchableOpacity>
@@ -511,7 +587,7 @@ const AccountScreen = ({ navigation }) => {
   );
 };
 
-// Premium Screen (placeholder)
+// Placeholder screens
 const PremiumScreen = () => (
   <SafeAreaView style={styles.container}>
     <View style={styles.centerContainer}>
@@ -522,7 +598,6 @@ const PremiumScreen = () => (
   </SafeAreaView>
 );
 
-// Credits Screen (placeholder)
 const CreditsScreen = () => (
   <SafeAreaView style={styles.container}>
     <View style={styles.centerContainer}>
@@ -560,19 +635,43 @@ const MainTabNavigator = () => {
   );
 };
 
+// Main App Component with Context Providers
+const AppWithProviders = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, styles.centerContainer]}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={{ marginTop: 16, color: COLORS.textSecondary }}>Loading...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <NavigationContainer>
+      <UserProvider>
+        <ChatProvider>
+          <Stack.Navigator initialRouteName={user ? "Main" : "Welcome"} screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="Welcome" component={WelcomeScreen} />
+            <Stack.Screen name="Main" component={MainTabNavigator} />
+            <Stack.Screen name="Matching" component={MatchingScreen} />
+            <Stack.Screen name="Chat" component={ChatScreen} />
+            <Stack.Screen name="Premium" component={PremiumScreen} />
+            <Stack.Screen name="Credits" component={CreditsScreen} />
+          </Stack.Navigator>
+        </ChatProvider>
+      </UserProvider>
+    </NavigationContainer>
+  );
+};
+
 // Main App Component
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Welcome" screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Welcome" component={WelcomeScreen} />
-        <Stack.Screen name="Main" component={MainTabNavigator} />
-        <Stack.Screen name="Matching" component={MatchingScreen} />
-        <Stack.Screen name="Chat" component={ChatScreen} />
-        <Stack.Screen name="Premium" component={PremiumScreen} />
-        <Stack.Screen name="Credits" component={CreditsScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <AuthProvider>
+      <AppWithProviders />
+    </AuthProvider>
   );
 }
 
