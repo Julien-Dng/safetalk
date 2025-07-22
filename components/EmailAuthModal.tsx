@@ -36,8 +36,7 @@ export function EmailAuthModal({ isOpen, onClose, onSuccess }: EmailAuthModalPro
     // Simulate authentication delay
     setTimeout(() => {
       setLoading(false);
-      const finalUsername = isSignUp ? username : email.split('@')[0];
-      onSuccess(finalUsername);
+      onSuccess(email, password, isSignUp ? username : undefined);
       onClose();
       // Reset form
       setEmail("");
