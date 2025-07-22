@@ -15,7 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 interface EmailAuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (username: string) => void;
+  onSuccess: (email: string, password: string, username?: string) => void;
 }
 
 export function EmailAuthModal({ isOpen, onClose, onSuccess }: EmailAuthModalProps) {
