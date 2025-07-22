@@ -70,7 +70,7 @@ export function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuthModalPro
     
     setTimeout(() => {
       setLoading(false);
-      onSuccess(username);
+      onSuccess(phoneNumber, verificationCode, username);
       onClose();
       // Reset form
       setPhoneNumber("");
