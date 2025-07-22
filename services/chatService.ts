@@ -11,6 +11,7 @@ import {
   getDocs,
   runTransaction,
   serverTimestamp,
+  increment,
   Timestamp
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
