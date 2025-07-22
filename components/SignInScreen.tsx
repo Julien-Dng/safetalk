@@ -138,6 +138,7 @@ export function SignInScreen({ onSignIn }: SignInScreenProps) {
               <TouchableOpacity
                 style={[styles.signInButton, styles.emailButton]}
                 onPress={() => setShowEmailModal(true)}
+                disabled={!!loading}
               >
                 <Ionicons name="mail-outline" size={20} color="#ffffff" />
                 <Text style={styles.emailButtonText}>Continue with Email</Text>
