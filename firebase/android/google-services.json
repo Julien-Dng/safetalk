@@ -1,0 +1,40 @@
+{
+  "_comment": "This is a placeholder file. Please replace with your actual google-services.json from Firebase Console",
+  "project_info": {
+    "project_number": "YOUR_PROJECT_NUMBER",
+    "project_id": "safetalk-app-project",
+    "storage_bucket": "safetalk-app-project.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:YOUR_PROJECT_NUMBER:android:YOUR_APP_ID",
+        "android_client_info": {
+          "package_name": "com.safetalk.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "YOUR_OAUTH_CLIENT_ID",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "YOUR_API_KEY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "YOUR_WEB_CLIENT_ID",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
