@@ -4,6 +4,12 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { appleAuth } from '@invertase/react-native-apple-authentication';
 import { AuthService } from '../services/AuthService';
 
+// Configure Google Sign-In
+GoogleSignin.configure({
+  webClientId: '439803992286-t0tv25oh59dumc53bhi3i5vm871doh20.apps.googleusercontent.com',
+  offlineAccess: true,
+});
+
 const AuthContext = createContext();
 
 export const useAuth = () => {
