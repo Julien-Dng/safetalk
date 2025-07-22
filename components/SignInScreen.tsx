@@ -103,26 +103,33 @@ export function SignInScreen({ onSignIn }: SignInScreenProps) {
               <TouchableOpacity
                 style={[styles.signInButton, styles.googleButton]}
                 onPress={handleGoogleAuth}
+                disabled={loading === "google"}
               >
                 <View style={styles.googleIcon}>
                   <Text style={styles.googleIconText}>G</Text>
                 </View>
-                <Text style={styles.googleButtonText}>Continue with Google</Text>
+                <Text style={styles.googleButtonText}>
+                  {loading === "google" ? "Signing in..." : "Continue with Google"}
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.signInButton, styles.appleButton]}
                 onPress={handleAppleAuth}
+                disabled={loading === "apple"}
               >
                 <View style={styles.appleIcon}>
                   <Text style={styles.appleIconText}>🍎</Text>
                 </View>
-                <Text style={styles.appleButtonText}>Continue with Apple</Text>
+                <Text style={styles.appleButtonText}>
+                  {loading === "apple" ? "Signing in..." : "Continue with Apple"}
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.signInButton, styles.phoneButton]}
                 onPress={() => setShowPhoneModal(true)}
+                disabled={!!loading}
               >
                 <Ionicons name="phone-portrait-outline" size={20} color="#ffffff" />
                 <Text style={styles.phoneButtonText}>Continue with Phone</Text>
