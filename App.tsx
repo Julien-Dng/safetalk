@@ -224,10 +224,22 @@ export default function App() {
     }
   };
 
-  const handleSetupComplete = (role: string) => {
-    setUserData(prev => ({ ...prev, role, hasCompletedSetup: true }));
-    // New users complete setup and go to empty state without auto-search
-    navigateToScreen("empty");
+  const handleSetupComplete = async (role: string) => {
+    try {
+      // Update user profile in Firebase
+      if (userData.uid) {
+        const { AuthService } = await import('./services/authService');
+        await AuthService.completeSetup(userData.uid, role as 'talk' | 'listen' | 'both');
+      }
+      
+      setUserData(prev => ({ ...prev, role, hasCompletedSetup: true }));
+      navigateToScreen("empty");
+    } catch (error) {
+      console.error('Error completing setup:', error);
+      // Still navigate to prevent user from being stuck
+      setUserData(prev => ({ ...prev, role, hasCompletedSetup: true }));
+      navigateToScreen("empty");
+    }
   };
 
   const handleTimerEnd = useCallback(() => {
