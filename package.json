@@ -40,11 +40,9 @@
     "expo-linking": "~6.2.2",
     "expo-splash-screen": "~0.26.4",
     "expo-status-bar": "~1.11.1",
-    "react-native-modal": "^13.0.1",
+    "react-native-modal": "^13.0.0",
     "react-native-progress": "^5.0.1",
-    "react-native-switch": "^3.0.0",
-    "react-native-elements": "^3.4.3",
-    "react-native-paper": "^5.12.3"
+    "@react-native-community/slider": "^4.4.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
