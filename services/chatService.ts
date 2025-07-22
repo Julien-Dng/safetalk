@@ -433,9 +433,3 @@ export class ChatService {
   }
 }
 
-// Helper function for increment (since it's used in Firestore updates)
-function increment(value: number) {
-  // In a real Firestore app, you would import this from firebase/firestore
-  // For now, we'll return the value as is since we're using mock data
-  return value;
-}
