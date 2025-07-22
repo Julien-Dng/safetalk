@@ -12,7 +12,20 @@
           "package_name": "com.safetalk.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "439803992286-n958pfcfpkfg25nr38o77l7alfb6pu7c.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.safetalk.app",
+            "certificate_hash": "81657f20e35aee599d23e3a5c15ad55453e155bc"
+          }
+        },
+        {
+          "client_id": "439803992286-t0tv25oh59dumc53bhi3i5vm871doh20.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBZ3ts77dXzyTjn4KmHgC8uKl1rw9J_MOk"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "439803992286-t0tv25oh59dumc53bhi3i5vm871doh20.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "439803992286-bv2d3r6112l04g3enh7uta2bd9v5fabe.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.safetalk.ios"
+              }
+            }
+          ]
         }
       }
     }
