@@ -210,18 +210,16 @@ export default function App() {
     setCurrentScreen(screen);
   };
 
-  const handleSignIn = (username: string) => {
-    setUserData(prev => ({ ...prev, username }));
+  const handleSignIn = (username: string, userProfile: any) => {
+    setUserData(prev => ({ 
+      ...prev, 
+      ...userProfile,
+      username 
+    }));
     
-    // Check if user has completed setup before (simulate checking existing account)
-    const hasExistingAccount = Math.random() > 0.3; // 70% chance of existing account for demo
-    
-    if (hasExistingAccount) {
-      // Existing user - go directly to empty state
-      setUserData(prev => ({ ...prev, hasCompletedSetup: true, role: "both" })); // Simulate existing role
+    if (userProfile.hasCompletedSetup) {
       navigateToScreen("empty");
     } else {
-      // New user - go to setup
       navigateToScreen("setup");
     }
   };
