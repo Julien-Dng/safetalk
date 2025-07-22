@@ -521,15 +521,47 @@ export default function App() {
     setUserData(prev => ({ ...prev, isPremium: true }));
   };
 
-  const handleFindPartner = () => {
-    setIsSearchingForPartner(true);
-    setCurrentScreen("empty");
-    
-    setTimeout(() => {
+  // Handle manual "Find a partner" - integrates with matching service
+  const handleFindPartner = async () => {
+    try {
+      setIsSearchingForPartner(true);
+      setCurrentScreen("empty");
+      
+      const { MatchingService } = await import('./services/matchingService');
+      const { requestId, promise } = await MatchingService.findMatch(userData as any);
+      
+      const result = await promise;
+      
       setIsSearchingForPartner(false);
-      startNewChatSession(getRemainingFreeTime(), getAvailablePaidTime());
-      navigateToScreen("chat");
-    }, 2000);
+      
+      if (result.success && result.chatId && result.partner) {
+        // Create chat session object
+        const newSession: ChatSession = {
+          id: result.chatId,
+          startTime: Date.now(),
+          interlocutor: {
+            username: result.partner.username,
+            rating: result.partner.rating,
+            isAmbassador: result.partner.isAmbassador
+          },
+          messages: [],
+          freeTimeLeft: getRemainingFreeTime(),
+          paidTimeLeft: getAvailablePaidTime(),
+          hasReceivedGift: false,
+          saveConversation: false,
+          isActive: true
+        };
+        
+        setChatSession(newSession);
+        navigateToScreen("chat");
+      } else {
+        // Show error or no match found message
+        console.log('No match found:', result.error);
+      }
+    } catch (error) {
+      console.error('Error finding partner:', error);
+      setIsSearchingForPartner(false);
+    }
   };
 
   const handleResumeChat = () => {
