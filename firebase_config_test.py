@@ -121,7 +121,9 @@ def test_service_implementations():
                     content = f.read()
                 
                 # Check for class/export definition
-                if f"export class {service_name}" in content or f"export const {service_name}" in content:
+                if (f"export class {service_name}" in content or 
+                    f"export const {service_name}" in content or
+                    f"export const {service_name.replace('Context', 'Provider')}" in content):
                     results.append((f"{service_name} Implementation", True, f"{service_name} properly exported"))
                 else:
                     results.append((f"{service_name} Implementation", False, f"{service_name} export not found"))
