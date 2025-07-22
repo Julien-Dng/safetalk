@@ -328,9 +328,13 @@ class FirebaseServiceTester:
             available_credits = credit_data['totalCredits'] - credit_data.get('usedCredits', 0)
             credits_to_use = 3
             
+            # Debug info
+            print(f"   Debug - Total credits: {credit_data['totalCredits']}, Used: {credit_data.get('usedCredits', 0)}, Available: {available_credits}")
+            
             if available_credits >= credits_to_use:
+                original_used = credit_data.get('usedCredits', 0)
                 await credit_ref.update({
-                    'usedCredits': credit_data.get('usedCredits', 0) + credits_to_use,
+                    'usedCredits': original_used + credits_to_use,
                     'updatedAt': datetime.utcnow()
                 })
                 
@@ -339,11 +343,13 @@ class FirebaseServiceTester:
                 updated_data = updated_credit.data()
                 new_used = updated_data.get('usedCredits', 0)
                 
-                if new_used == credit_data.get('usedCredits', 0) + credits_to_use:
+                print(f"   Debug - Original used: {original_used}, New used: {new_used}, Expected: {original_used + credits_to_use}")
+                
+                if new_used == original_used + credits_to_use:
                     remaining = updated_data['totalCredits'] - new_used
                     self.log_test("Credit Usage", True, f"Credits used successfully. Remaining: {remaining}")
                 else:
-                    self.log_test("Credit Usage", False, "Credit usage update failed")
+                    self.log_test("Credit Usage", False, f"Credit usage update failed. Expected: {original_used + credits_to_use}, Got: {new_used}")
             else:
                 self.log_test("Credit Usage", True, f"Insufficient credits detected correctly. Available: {available_credits}, Requested: {credits_to_use}")
                 
