@@ -14,9 +14,9 @@ export const initializeFirebase = () => {
       firebaseApp = firebase.app();
     }
 
-    // Configure Google Sign-In
+    // Configure Google Sign-In with the correct web client ID
     GoogleSignin.configure({
-      webClientId: 'YOUR_WEB_CLIENT_ID', // From google-services.json
+      webClientId: '439803992286-t0tv25oh59dumc53bhi3i5vm871doh20.apps.googleusercontent.com',
       offlineAccess: true,
     });
 
