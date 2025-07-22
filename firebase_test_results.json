@@ -1,0 +1,130 @@
+{
+  "summary": {
+    "total_tests": 16,
+    "passed_tests": 15,
+    "failed_tests": 1,
+    "success_rate": 93.75,
+    "critical_systems_status": {
+      "Daily Timer System": true,
+      "Credit System": false,
+      "Chat System": true,
+      "Matchmaking System": true,
+      "Authentication": true
+    }
+  },
+  "detailed_results": [
+    {
+      "test": "Daily Timer Reset",
+      "success": true,
+      "message": "Timer reset successfully for new day",
+      "details": {},
+      "timestamp": "2025-07-22T15:16:45.049206"
+    },
+    {
+      "test": "Credit Usage",
+      "success": false,
+      "message": "Credit usage update failed",
+      "details": {},
+      "timestamp": "2025-07-22T15:16:45.049224"
+    },
+    {
+      "test": "User Stats Update",
+      "success": true,
+      "message": "Stats updated: {'totalChats': 1, 'totalMessagesReceived': 0, 'totalMessagesSent': 5, 'averageRating': 0, 'totalRatings': 0}",
+      "details": {},
+      "timestamp": "2025-07-22T15:16:45.049247"
+    },
+    {
+      "test": "Premium User Check",
+      "success": true,
+      "message": "Premium user identified correctly",
+      "details": {},
+      "timestamp": "2025-07-22T15:16:45.049262"
+    },
+    {
+      "test": "Premium Subscription",
+      "success": true,
+      "message": "Subscription created successfully",
+      "details": {},
+      "timestamp": "2025-07-22T15:16:45.049295"
+    },
+    {
+      "test": "Chat Creation",
+      "success": true,
+      "message": "Chat created with ID: d17a4dc9-6fd8-41be-b511-3cad52fc6aeb",
+      "details": {},
+      "timestamp": "2025-07-22T15:16:45.049323"
+    },
+    {
+      "test": "Message Sending",
+      "success": true,
+      "message": "Message sent and stats updated",
+      "details": {},
+      "timestamp": "2025-07-22T15:16:45.049354"
+    },
+    {
+      "test": "Chat Rating",
+      "success": true,
+      "message": "Rating submitted. Partner average: 4.5",
+      "details": {},
+      "timestamp": "2025-07-22T15:16:45.049406"
+    },
+    {
+      "test": "User Blocking",
+      "success": true,
+      "message": "User blocked successfully. Blocked list: ['test_user_2']",
+      "details": {},
+      "timestamp": "2025-07-22T15:16:45.049422"
+    },
+    {
+      "test": "Matchmaking Queue",
+      "success": true,
+      "message": "User added to queue successfully",
+      "details": {},
+      "timestamp": "2025-07-22T15:16:45.049436"
+    },
+    {
+      "test": "Partner Finding",
+      "success": true,
+      "message": "Partner found: test_user_2",
+      "details": {},
+      "timestamp": "2025-07-22T15:16:45.049454"
+    },
+    {
+      "test": "Recent Partner Avoidance",
+      "success": true,
+      "message": "Recent partners identified: ['test_user_2']",
+      "details": {},
+      "timestamp": "2025-07-22T15:16:45.049507"
+    },
+    {
+      "test": "Blocked User Exclusion",
+      "success": true,
+      "message": "Exclusion list created: ['test_user_2', 'test_user_1']",
+      "details": {},
+      "timestamp": "2025-07-22T15:16:45.049521"
+    },
+    {
+      "test": "User Creation",
+      "success": true,
+      "message": "New user created with default values",
+      "details": {},
+      "timestamp": "2025-07-22T15:16:45.049556"
+    },
+    {
+      "test": "User Data Retrieval",
+      "success": true,
+      "message": "User data retrieved: TestUser1",
+      "details": {},
+      "timestamp": "2025-07-22T15:16:45.049566"
+    },
+    {
+      "test": "Email Existence Check",
+      "success": true,
+      "message": "Email existence check working correctly",
+      "details": {},
+      "timestamp": "2025-07-22T15:16:45.049585"
+    }
+  ],
+  "timestamp": "2025-07-22T15:16:45.049787"
+}
