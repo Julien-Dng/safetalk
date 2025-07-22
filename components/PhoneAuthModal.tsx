@@ -15,7 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 interface PhoneAuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (username: string) => void;
+  onSuccess: (phoneNumber: string, verificationCode: string, username: string) => void;
 }
 
 export function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuthModalProps) {
