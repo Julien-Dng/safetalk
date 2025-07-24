@@ -326,7 +326,7 @@ export function SetupScreen({ onShowAccount, onComplete }: SetupScreenProps) {
             activeOpacity={selectedRole ? 0.8 : 1}
           >
             <LinearGradient
-              colors={selectedRole ? ['#a855f7', '#ec4899'] : ['#6b7280', '#6b7280']}
+              colors={selectedRole ? ['#6b21a8', '#6b21a8'] : ['#6b7280', '#6b7280']}
               style={styles.continueButtonGradient}
             >
               <Text style={[
@@ -453,6 +453,7 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 16,
     marginBottom: 24,
+    opacity:0.9
   },
   continueButtonDisabled: {
     opacity: 0.5,
@@ -462,6 +463,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 16,
+    opacity:0.9
   },
   continueButtonText: {
     fontSize: 16,
