@@ -856,7 +856,7 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  const handleSignIn = async (profile: any) => {
+  const handleSignIn = async (_username: string,profile: any) => {
     setUserData(profile);
     setIsAuthenticated(true);
 
@@ -956,8 +956,8 @@ const handleUpdateUsername = async (newUsername: string) => {
             <Stack.Screen name="Setup">
               {() => (
                 <SetupScreen
-                  onBack={() => setIsAuthenticated(false)}
-                  onComplete={() => setSetupCompleted(true)}
+                  onComplete={handleSetupComplete}
+                  onShowAccount={() => navigationRef.current?.navigate("Account")}
                 />
               )}
             </Stack.Screen>
