@@ -106,7 +106,7 @@ export function EmptyState({
                 onPress={onChatWithAI}
                 style={[styles.actionButton, styles.aiButton]}
               >
-                <Ionicons name="robot-outline" size={16} color="#c4b5fd" />
+               {/* <Ionicons name="robot-outline" size={16} color="#c4b5fd" /> */}
                 <Text style={styles.aiButtonText}>Chat with AI Assistant</Text>
               </TouchableOpacity>
             </View>

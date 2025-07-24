@@ -3,6 +3,7 @@ import {
   doc,
   addDoc,
   updateDoc,
+  getDoc,
   onSnapshot,
   query,
   orderBy,
@@ -365,6 +366,16 @@ export class ChatService {
       console.error('Error getting active sessions:', error);
       return [];
     }
+  }
+
+  static async getSessionById(chatId: string): Promise<ChatSession | null> {
+    const ref = doc(db, "chats", chatId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return null;
+    return {
+      id: snap.id,
+      ...(snap.data() as Omit<ChatSession, "id">),
+    };
   }
 
   // Schedule AI response (simulated)
