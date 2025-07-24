@@ -16,6 +16,7 @@ export interface TimerState {
 export class TimerService {
   private static instance: TimerService;
   private timerInterval: NodeJS.Timeout | null = null;
+  private autoSaveInterval: NodeJS.Timeout | null = null;
   private listeners: Set<(state: TimerState) => void> = new Set();
   private currentState: TimerState = {
     freeTimeLeft: 0,
@@ -75,6 +76,7 @@ export class TimerService {
       };
 
       // Start auto-save
+      this.stopAutoSave();
       this.startAutoSave(userProfile.uid);
       
       // Notify listeners
@@ -123,6 +125,8 @@ export class TimerService {
       clearInterval(this.timerInterval);
       this.timerInterval = null;
     }
+
+    this.stopAutoSave();
 
     this.currentState.timerPaused = true;
     this.currentState.sessionId = null;
@@ -243,9 +247,10 @@ export class TimerService {
 
   // Notify all listeners
   private notifyListeners(): void {
+    const state = { ...this.currentState };
     this.listeners.forEach(callback => {
       try {
-        callback(this.currentState);
+        callback(state);
       } catch (error) {
         console.error('Error in timer listener:', error);
       }
@@ -307,10 +312,17 @@ export class TimerService {
 
   // Start auto-save interval
   private startAutoSave(uid: string): void {
-    // Save state every 10 seconds
-    setInterval(() => {
+    this.stopAutoSave();
+    this.autoSaveInterval = setInterval(() => {
       this.saveTimerState(uid);
     }, 10000);
+  }
+
+    private stopAutoSave(): void {
+    if (this.autoSaveInterval) {
+      clearInterval(this.autoSaveInterval);
+      this.autoSaveInterval = null;
+    }
   }
 
   // Update user profile in Firestore

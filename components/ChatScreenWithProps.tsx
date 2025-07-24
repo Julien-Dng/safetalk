@@ -108,6 +108,7 @@ export default function ChatScreenWithProps({
 
   const messagesEndRef = useRef<ScrollView>(null);
   const timerService = useRef(TimerService.getInstance());
+  const timerUnsubscribe = useRef<(() => void) | null>(null)
   const chatMessageUnsubscribe = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -149,6 +150,7 @@ export default function ChatScreenWithProps({
             onTimerEnd();
           }
         });
+        timerUnsubscribe.current = unSubTimer
       timerService.current.startTimer();
 
       // Messages
@@ -193,6 +195,7 @@ export default function ChatScreenWithProps({
 
   const cleanup = () => {
     timerService.current.stopTimer();
+    timerUnsubscribe.current?.();
     chatMessageUnsubscribe.current?.();
     ChatService.unsubscribeFromChat(chatSession.id);
   };
