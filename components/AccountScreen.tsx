@@ -359,6 +359,7 @@ interface AccountScreenProps {
   onBack: () => void;
   onShowReferral: () => void;
   onShowRewards: () => void;
+  onPremium: () => void;
   onLogout: () => void;
   onUpdateUsername: (newUsername: string) => void;
 }
@@ -394,6 +395,7 @@ export function AccountScreen({
   onBack,
   onShowReferral,
   onShowRewards,
+  onPremium,
   onLogout,
   onUpdateUsername
 }: AccountScreenProps) {
@@ -594,7 +596,9 @@ export function AccountScreen({
           </TouchableOpacity>
 
           {!isPremium && (
-            <TouchableOpacity style={styles.premiumButton}>
+            <TouchableOpacity 
+              style={styles.premiumButton}
+              onPress={onPremium}>
               <View style={styles.premiumIcon}>
                 <Crown size={20} color="#ffffff" />
               </View>
