@@ -120,7 +120,7 @@ export default function ChatScreenWithProps({
       // Timer
       await timerService.current.initializeTimer(
         {
-          uid: "current-user",
+          uid,
           isPremium,
           dailyFreeTimeUsed:
             1200 - dailyFreeTimeRemaining,
@@ -160,7 +160,7 @@ export default function ChatScreenWithProps({
               id: msg.id,
               text: msg.text,
               sender:
-                msg.senderId === "current-user"
+                msg.senderId === uid
                   ? "user"
                   : msg.senderId === "system"
                   ? "system"
@@ -221,7 +221,7 @@ export default function ChatScreenWithProps({
     try {
       await ChatService.sendMessage(
         chatSession.id,
-        "current-user",
+        uid,
         username,
         inputText.trim(),
         "text"
@@ -270,7 +270,7 @@ export default function ChatScreenWithProps({
       try {
         // Deduct credits from user account
         const success = await CreditService.deductCredits(
-          'current-user',
+          uid,
           credits,
           `Used ${credits} credits for chat time`
         );

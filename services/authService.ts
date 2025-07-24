@@ -390,7 +390,7 @@ export class AuthService {
       username: additionalData.username || user.displayName || 'User' + Math.floor(Math.random() * 1000),
       role: 'both',
       isPremium: false,
-      credits: 25,
+      credits: 5,
       giftableCredits: 0,
       dailyFreeTimeUsed: 0,
       paidTimeAvailable: 0,

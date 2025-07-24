@@ -57,8 +57,13 @@ export class TimerService {
       const paidTimeLeft = userProfile.paidTimeAvailable;
 
       // Load or create timer state
-      const savedState = await this.loadTimerState(userProfile.uid);
-      
+      let savedState = await this.loadTimerState(userProfile.uid);
+
+      if (savedState && sessionId && savedState.sessionId && savedState.sessionId !== sessionId) {
+        // New chat session, ignore previous state
+        savedState = null;
+      }
+
       this.currentState = {
         freeTimeLeft: savedState?.freeTimeLeft ?? freeTimeLeft,
         paidTimeLeft: savedState?.paidTimeLeft ?? paidTimeLeft,
@@ -66,7 +71,7 @@ export class TimerService {
         creditsActivated: savedState?.creditsActivated ?? false,
         timerPaused: true, // Start paused
         lastTickTime: Date.now(),
-        sessionId: sessionId || null
+        sessionId: sessionId || savedState?.sessionId || null
       };
 
       // Start auto-save

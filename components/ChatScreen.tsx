@@ -7,6 +7,8 @@ import { ChatService, ChatSession } from "../services/chatService";
 import { auth } from "../config/firebase";
 import { AuthService, UserProfile } from "../services/authService";
 
+const DAILY_FREE_LIMIT_SEC = 20 * 60;
+
 interface ChatScreenProps {
   onCloseChat: (freeTimeLeft: number, paidTimeLeft: number) => void;
 }
@@ -45,6 +47,11 @@ export default function ChatScreen({ onCloseChat }: ChatScreenProps) {
     );
   }
 
+   const freeTimeRemaining =
+    user.isPremium
+      ? Infinity
+      : Math.max(0, DAILY_FREE_LIMIT_SEC - user.dailyFreeTimeUsed);
+
   return (
     <ChatScreenWithProps
       uid={user.uid}
@@ -54,7 +61,7 @@ export default function ChatScreen({ onCloseChat }: ChatScreenProps) {
       credits={user.credits}
       isPremium={user.isPremium}
       giftableCredits={user.giftableCredits}
-      dailyFreeTimeRemaining={user.dailyFreeTimeUsed}
+      dailyFreeTimeRemaining={freeTimeRemaining}
       paidTimeAvailable={user.paidTimeAvailable}
       onBack={() => {}}
       onCloseChat={onCloseChat}
