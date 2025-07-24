@@ -1,15 +1,20 @@
 // src/components/ChatScreen.tsx
 import React, { useState, useEffect } from "react";
 import { Text } from "react-native";
-import { useRoute } from "@react-navigation/native";
+import { useRoute, useNavigation } from "@react-navigation/native";
 import ChatScreenWithProps from "./ChatScreenWithProps";
 import { ChatService, ChatSession } from "../services/chatService";
 import { auth } from "../config/firebase";
 import { AuthService, UserProfile } from "../services/authService";
 
-export default function ChatScreen() {
+interface ChatScreenProps {
+  onCloseChat: (freeTimeLeft: number, paidTimeLeft: number) => void;
+}
+
+export default function ChatScreen({ onCloseChat }: ChatScreenProps) {
   const { params } = useRoute<any>();
   const { sessionId } = params;
+  const navigation = useNavigation<any>();
 
   const [session, setSession] = useState(null as any);
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -52,9 +57,9 @@ export default function ChatScreen() {
       dailyFreeTimeRemaining={user.dailyFreeTimeUsed}
       paidTimeAvailable={user.paidTimeAvailable}
       onBack={() => {}}
-      onCloseChat={() => {}}
+      onCloseChat={onCloseChat}
       onTimerEnd={() => {}}
-      onShowAccount={() => {}}
+      onShowAccount={() => navigation.navigate('Account')}
       onChatEnd={() => {}}
       onPartnerChange={() => {}}
       onUserBlocked={() => {}}

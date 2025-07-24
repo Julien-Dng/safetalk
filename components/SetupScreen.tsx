@@ -11,11 +11,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 
 interface SetupScreenProps {
-  onBack: () => void;
+  onShowAccount: () => void;
   onComplete: (role: string) => void;
 }
 
-export function SetupScreen({ onBack, onComplete }: SetupScreenProps) {
+export function SetupScreen({ onComplete, onShowAccount}: SetupScreenProps) {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
 
   const handleComplete = () => {
@@ -34,11 +34,12 @@ export function SetupScreen({ onBack, onComplete }: SetupScreenProps) {
         
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={onBack} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#ffffff" />
+          <TouchableOpacity
+            style={styles.accountButton}
+            onPress={onShowAccount}
+          >
+            <Ionicons name="settings-outline" size={20} color="#c4b5fd" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Setup Profile</Text>
-          <View style={styles.placeholder} />
         </View>
 
         <View style={styles.content}>
@@ -117,20 +118,13 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     padding: 16,
   },
-  backButton: {
-    padding: 4,
+   accountButton: {
+    padding: 8,
   },
-  headerTitle: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  placeholder: {
-    width: 32,
-  },
+
   content: {
     flex: 1,
     paddingHorizontal: 24,

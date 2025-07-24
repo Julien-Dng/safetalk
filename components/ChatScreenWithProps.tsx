@@ -234,9 +234,21 @@ export default function ChatScreenWithProps({
     }
   };
 
-  const handleCloseChat = () => {
+  const handleCloseChat = async () => {
     const free = timerState?.freeTimeLeft ?? 0;
     const paid = timerState?.paidTimeLeft ?? 0;
+
+    // Mark the session as ended in the backend
+    try {
+      await ChatService.endChatSession(
+        chatSession.id,
+        Math.floor((Date.now() - chatSession.metadata.startTime) / 1000),
+        messages.filter(m => m.sender !== 'system').length
+      );
+    } catch (error) {
+      console.error('Error ending chat session:', error);
+    }
+
     onCloseChat(free, paid);
   };
 

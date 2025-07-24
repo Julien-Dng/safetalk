@@ -844,18 +844,13 @@ export default function App() {
         });
 
         const sessions = await ChatService.getUserActiveSessions(user.uid);
-        if (sessions.length > 0) {
-          setChatSession(sessions[0]);
-          setSetupCompleted(true);
+          setChatSession(sessions.length > 0 ? sessions[0] : null);
+          setSetupCompleted(profile.hasCompletedSetup);
         } else {
-          setChatSession(null);
+          setUserData(null);
+          setIsAuthenticated(false);
           setSetupCompleted(false);
-        }
-      } else {
-        setUserData(null);
-        setIsAuthenticated(false);
-        setSetupCompleted(false);
-        setChatSession(null);
+          setChatSession(null);
       }
     });
     return () => unsubscribe();
@@ -866,13 +861,8 @@ export default function App() {
     setIsAuthenticated(true);
 
     const sessions = await ChatService.getUserActiveSessions(profile.uid);
-    if (sessions.length > 0) {
-      setChatSession(sessions[0]);
-      setSetupCompleted(true);
-    } else {
-      setChatSession(null);
-      setSetupCompleted(false);
-    }
+    setChatSession(sessions.length > 0 ? sessions[0] : null);
+    setSetupCompleted(profile.hasCompletedSetup);
   };
 
   const handleFindPartner = async () => {
@@ -889,6 +879,14 @@ export default function App() {
   
   const handleChatWithAI = () => {
     console.log("🤖 Chat with AI");
+  };
+
+  const handleCloseChat = (
+    _freeTimeLeft: number,
+    _paidTimeLeft: number
+  ) => {
+    setChatSession(null);
+    navigationRef.current?.navigate('Setup');
   };
   
   const handleResumeChat = () => {
@@ -914,6 +912,21 @@ const handleUpdateUsername = async (newUsername: string) => {
     console.error("❌ Erreur lors de la mise à jour du nom d'utilisateur :", error);
   }
 };
+
+  const handleSetupComplete = async (role: string) => {
+    if (userData?.uid) {
+      try {
+        await AuthService.completeSetup(userData.uid, role as 'talk' | 'listen' | 'both');
+      } catch (error) {
+        console.error('❌ Error completing setup:', error);
+      }
+    }
+    if (userData) {
+        setUserData({ ...userData, role, hasCompletedSetup: true });
+    }
+    setSetupCompleted(true);
+    navigationRef.current?.navigate('Empty');
+  };
 
   const hasActiveSession = () => {
     return chatSession?.status === 'active';
@@ -962,6 +975,7 @@ const handleUpdateUsername = async (newUsername: string) => {
         <Stack.Screen name="Empty">
             {() => (
               <EmptyState
+                onBack={() => navigationRef.current?.navigate("Setup")}
                 onFindPartner={handleFindPartner}
                 onChatWithAI={handleChatWithAI}
                 onResumeChat={hasActiveSession() ? handleResumeChat : undefined}
@@ -972,20 +986,30 @@ const handleUpdateUsername = async (newUsername: string) => {
             )}
           </Stack.Screen>
           
-          <Stack.Screen name="Chat" component={ChatScreen} />
+          <Stack.Screen name="Chat">
+            {() => <ChatScreen onCloseChat={handleCloseChat} />}
+          </Stack.Screen>
           <Stack.Screen name="Account">
-            {() => (
+            {({ navigation }) => (
               <AccountScreen
                 username={userData?.username}
                 credits={userData?.credits}
                 isPremium={userData?.isPremium}
                 dailyFreeTimeRemaining={userData?.dailyFreeTimeRemaining || 0}
                 paidTimeAvailable={userData?.paidTimeAvailable || 0}
-                onBack={() => navigationRef.current?.navigate("Empty")}
+                onBack={() => navigation.goBack()}
                 onShowReferral={() => navigationRef.current?.navigate("Referral")}
                 onShowRewards={() => navigationRef.current?.navigate("Rewards")}
                 onLogout={handleLogout}
                 onUpdateUsername={handleUpdateUsername}
+              />
+            )}
+          </Stack.Screen>
+          <Stack.Screen name="Setup">
+            {() => (
+              <SetupScreen
+                onShowAccount={() => navigationRef.current?.navigate("Account")}
+                onComplete={handleSetupComplete}
               />
             )}
           </Stack.Screen>

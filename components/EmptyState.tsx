@@ -11,6 +11,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 
 interface EmptyStateProps {
+  onBack: () => void;
   onFindPartner: () => void;
   onChatWithAI: () => void;
   onResumeChat?: () => void;
@@ -20,6 +21,7 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ 
+  onBack,
   onFindPartner,
   onChatWithAI, 
   onResumeChat,
@@ -37,6 +39,9 @@ export function EmptyState({
         
         {/* Header with Account Access Button */}
         <View style={styles.header}>
+          <TouchableOpacity onPress={onBack} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#ffffff" />
+          </TouchableOpacity>
           <TouchableOpacity
             style={styles.accountButton}
             onPress={onShowAccount}
@@ -190,8 +195,12 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 16,
+  },
+   backButton: {
+    padding: 4,
   },
   accountButton: {
     padding: 8,
