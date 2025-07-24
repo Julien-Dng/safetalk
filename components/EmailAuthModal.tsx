@@ -15,7 +15,12 @@ import { Ionicons } from "@expo/vector-icons";
 interface EmailAuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (email: string, password: string, username?: string) => void;
+    onSuccess: (
+    email: string,
+    password: string,
+    username?: string,
+    isSignUp?: boolean
+  ) => void;
 }
 
 export function EmailAuthModal({ isOpen, onClose, onSuccess }: EmailAuthModalProps) {
@@ -36,7 +41,7 @@ export function EmailAuthModal({ isOpen, onClose, onSuccess }: EmailAuthModalPro
     // Simulate authentication delay
     setTimeout(() => {
       setLoading(false);
-      onSuccess(email, password, isSignUp ? username : undefined);
+      onSuccess(email, password, isSignUp ? username : undefined, isSignUp);
       onClose();
       // Reset form
       setEmail("");
