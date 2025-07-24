@@ -193,52 +193,6 @@ export function ReferralScreen({
           </View>
         </Card>
 
-        {/* Rewards Breakdown */}
-        <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Rewards per Referral</Text>
-          <View style={styles.rewardsContainer}>
-            <View style={styles.rewardItem}>
-              <View style={styles.rewardLeft}>
-                <View style={[styles.rewardIcon, { backgroundColor: '#3b82f6' }]}>
-                  <Gift size={16} color="#ffffff" />
-                </View>
-                <Text style={styles.rewardTitle}>Free Users</Text>
-              </View>
-              <Badge variant="secondary">
-                <Text style={styles.badgeText}>5 credits</Text>
-              </Badge>
-            </View>
-            
-            {isPremium && (
-              <>
-                <View style={styles.rewardItem}>
-                  <View style={styles.rewardLeft}>
-                    <View style={[styles.rewardIcon, { backgroundColor: '#8b5cf6' }]}>
-                      <Crown size={16} color="#ffffff" />
-                    </View>
-                    <Text style={styles.rewardTitle}>Premium Users</Text>
-                  </View>
-                  <Badge>
-                    <Text style={styles.premiumBadgeText}>+1 day premium</Text>
-                  </Badge>
-                </View>
-                
-                <View style={styles.rewardItem}>
-                  <View style={styles.rewardLeft}>
-                    <View style={[styles.rewardIcon, { backgroundColor: '#eab308' }]}>
-                      <Star size={16} color="#ffffff" />
-                    </View>
-                    <Text style={styles.rewardTitle}>Premium Bonus</Text>
-                  </View>
-                  <Badge variant="secondary">
-                    <Text style={styles.badgeText}>1 credit/day</Text>
-                  </Badge>
-                </View>
-              </>
-            )}
-          </View>
-        </Card>
-
         {/* Recent Rewards */}
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Recent Rewards</Text>

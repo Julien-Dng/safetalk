@@ -783,15 +783,13 @@
 
 import React, { useState, useCallback, useEffect } from "react";
 import { StyleSheet, StatusBar } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, DarkTheme} from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { onAuthStateChanged } from "firebase/auth";
 
 import type { ChatSession } from './services/chatService';
 import  { ChatService } from './services/chatService';
-
-
 
 // Import screens
 import { WelcomeScreen } from "./components/WelcomeScreen";
@@ -817,6 +815,15 @@ import { doc, updateDoc } from 'firebase/firestore';
 
 
 const Stack = createStackNavigator();
+
+const MyTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: '#0f0f23',
+  },
+};
+
 const DAILY_FREE_LIMIT_SEC = 20 * 60
 
 export default function App() {
@@ -919,6 +926,21 @@ const handleUpdateUsername = async (newUsername: string) => {
   }
 };
 
+  const handleConvertCredits = () => {
+    const rewardsEarned = Math.floor((userData?.giftableCredits ?? 0) / 15);
+    const creditsUsed = rewardsEarned * 15;
+
+    setUserData((prev: any) => ({
+      ...prev,
+      giftableCredits: prev.giftableCredits - creditsUsed,
+      totalRewards: prev.totalRewards + rewardsEarned,
+    }));
+  };
+
+  const handleUpgrade = () => {
+    setUserData((prev: any) => ({ ...prev, isPremium: true }));
+  };
+
   const handleSetupComplete = async (role: string) => {
     if (userData?.uid) {
       try {
@@ -942,7 +964,7 @@ const handleUpdateUsername = async (newUsername: string) => {
     return (
       <SafeAreaProvider>
         <StatusBar barStyle="light-content" backgroundColor="#0f0f23" />
-        <NavigationContainer>
+        <NavigationContainer theme={MyTheme}>
           <Stack.Navigator screenOptions={{ headerShown: false }}>
             <Stack.Screen name="SignIn">
               {() => <SignInScreen onSignIn={handleSignIn} />}
@@ -957,7 +979,7 @@ const handleUpdateUsername = async (newUsername: string) => {
     return (
       <SafeAreaProvider>
         <StatusBar barStyle="light-content" backgroundColor="#0f0f23" />
-        <NavigationContainer>
+        <NavigationContainer theme={MyTheme}>
           <Stack.Navigator screenOptions={{ headerShown: false }}>
             <Stack.Screen name="Setup">
               {() => (
@@ -976,7 +998,7 @@ const handleUpdateUsername = async (newUsername: string) => {
   return (
     <SafeAreaProvider>
       <StatusBar barStyle="light-content" backgroundColor="#0f0f23" />
-      <NavigationContainer ref={navigationRef}>
+      <NavigationContainer ref={navigationRef} theme={MyTheme}>
         <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Empty">
         <Stack.Screen name="Empty">
             {() => (
@@ -1006,6 +1028,7 @@ const handleUpdateUsername = async (newUsername: string) => {
                 onBack={() => navigation.goBack()}
                 onShowReferral={() => navigationRef.current?.navigate("Referral")}
                 onShowRewards={() => navigationRef.current?.navigate("Rewards")}
+                onPremium={() => navigationRef.current?.navigate("Premium")}
                 onLogout={handleLogout}
                 onUpdateUsername={handleUpdateUsername}
               />
@@ -1019,9 +1042,35 @@ const handleUpdateUsername = async (newUsername: string) => {
               />
             )}
           </Stack.Screen>
-          <Stack.Screen name="Referral" component={ReferralScreen} />
-          <Stack.Screen name="Rewards" component={MyRewardsScreen} />
-          <Stack.Screen name="Premium" component={PremiumScreen} />
+          <Stack.Screen name="Referral">
+            {({ navigation }) => (
+              <ReferralScreen
+                onBack={() => navigation.goBack()}
+                isPremium={userData?.isPremium}
+                referralCount={userData?.referralCount}
+                totalRewards={userData?.totalRewards}
+              />
+            )}
+          </Stack.Screen>
+          <Stack.Screen name="Rewards">
+            {({ navigation }) => (
+              <MyRewardsScreen
+                onBack={() => navigation.goBack()}
+                giftableCredits={userData?.giftableCredits}
+                isPremium={userData?.isPremium}
+                onConvertCredits={handleConvertCredits}
+              />
+            )}
+          </Stack.Screen>
+          <Stack.Screen name="Premium">
+            {({ navigation }) => (
+              <PremiumScreen
+                onBack={() => navigation.goBack()}
+                isPremium={userData?.isPremium}
+                onUpgrade={handleUpgrade}
+              />
+            )}
+          </Stack.Screen>
         </Stack.Navigator>
 
         {/* Modals */}

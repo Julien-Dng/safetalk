@@ -508,11 +508,7 @@ export function AccountScreen({
           
           <View style={styles.timeSection}>
             {isPremium ? (
-              <View style={styles.unlimitedContainer}>
-                <Text style={styles.unlimitedSymbol}>∞</Text>
-                <Text style={styles.unlimitedText}>Unlimited Chat Time</Text>
-                <Text style={styles.unlimitedSubtext}>Premium Member</Text>
-              </View>
+             null
             ) : (
               <View style={styles.timeBreakdown}>
                 {/* Today's Free Time */}
