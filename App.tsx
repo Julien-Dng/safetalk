@@ -817,6 +817,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 
 
 const Stack = createStackNavigator();
+const DAILY_FREE_LIMIT_SEC = 20 * 60
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -824,6 +825,11 @@ export default function App() {
   const [userData, setUserData] = useState<any>(null);
   const [chatSession, setChatSession] = useState<ChatSession | null>(null);
   const navigationRef = React.useRef<any>(null);
+
+  const freeTimeRemaining =
+  userData?.isPremium
+    ? Infinity
+    : Math.max(0, DAILY_FREE_LIMIT_SEC - (userData?.dailyFreeTimeUsed ?? 0));
 
   function getPartnerUsername(session: ChatSession | null, currentUserId: string | undefined): string | undefined {
     if (!session || !currentUserId) return undefined;
@@ -995,7 +1001,7 @@ const handleUpdateUsername = async (newUsername: string) => {
                 username={userData?.username}
                 credits={userData?.credits}
                 isPremium={userData?.isPremium}
-                dailyFreeTimeRemaining={userData?.dailyFreeTimeRemaining || 0}
+                dailyFreeTimeRemaining={freeTimeRemaining}
                 paidTimeAvailable={userData?.paidTimeAvailable || 0}
                 onBack={() => navigation.goBack()}
                 onShowReferral={() => navigationRef.current?.navigate("Referral")}
