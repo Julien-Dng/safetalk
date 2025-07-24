@@ -42,6 +42,7 @@ export default function ChatScreen() {
 
   return (
     <ChatScreenWithProps
+      uid={user.uid}
       chatSession={session}
       username={user.username}
       role={user.role}

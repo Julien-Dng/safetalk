@@ -834,13 +834,10 @@ export default function App() {
  useEffect(() => {
    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-      //  const { AuthService } = await import("./services/authService");
-
         const profile = await AuthService.getUserProfile(user.uid);
         setUserData(profile);
         setIsAuthenticated(true);
-        setSetupCompleted(profile.hasCompletedSetup);
-
+        
         await updateDoc(doc(db, "users", user.uid), {
           isOnline: true,
           lastSeen: new Date().toISOString()
@@ -849,20 +846,33 @@ export default function App() {
         const sessions = await ChatService.getUserActiveSessions(user.uid);
         if (sessions.length > 0) {
           setChatSession(sessions[0]);
+          setSetupCompleted(true);
+        } else {
+          setChatSession(null);
+          setSetupCompleted(false);
         }
       } else {
         setUserData(null);
         setIsAuthenticated(false);
         setSetupCompleted(false);
+        setChatSession(null);
       }
     });
     return () => unsubscribe();
   }, []);
 
-  const handleSignIn = (profile: any) => {
+  const handleSignIn = async (profile: any) => {
     setUserData(profile);
     setIsAuthenticated(true);
-    setSetupCompleted(profile.hasCompletedSetup);
+
+    const sessions = await ChatService.getUserActiveSessions(profile.uid);
+    if (sessions.length > 0) {
+      setChatSession(sessions[0]);
+      setSetupCompleted(true);
+    } else {
+      setChatSession(null);
+      setSetupCompleted(false);
+    }
   };
 
   const handleFindPartner = async () => {
@@ -905,7 +915,9 @@ const handleUpdateUsername = async (newUsername: string) => {
   }
 };
 
-  const hasActiveSession = () => false; // ou logique réelle
+  const hasActiveSession = () => {
+    return chatSession?.status === 'active';
+  };
 
   if (!isAuthenticated) {
     return (

@@ -37,6 +37,7 @@ interface Message {
 
 // Cette interface <–> props que vous recevez du wrapper
 export interface ChatScreenProps {
+  uid: string;
   username: string;
   role: string;
   chatSession: ServiceChatSession;
@@ -62,6 +63,7 @@ export interface ChatScreenProps {
 }
 
 export default function ChatScreenWithProps({
+  uid,
   username,
   role,
   chatSession,
@@ -85,7 +87,7 @@ export default function ChatScreenWithProps({
   onUpdateSession,
   onLowTimeAlert,
 }: ChatScreenProps) {
-    const partnerId = chatSession.participants.find((id) => id !== username);
+    const partnerId = chatSession.participants.find((id) => id !== uid);
 
   // 2) Resolve their profile (or fall back to the AI)
   const interlocutor = partnerId
