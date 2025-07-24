@@ -23,20 +23,24 @@ export default function ChatScreen({ onCloseChat }: ChatScreenProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let unSub: (() => void) | undefined;
     (async () => {
       try {
         const s = await ChatService.getSessionById(sessionId);
         setSession(s);
         if (auth.currentUser) {
-          const p = await AuthService.getUserProfile(
-            auth.currentUser.uid
+            unSub = AuthService.subscribeToUserProfile(
+            auth.currentUser.uid,
+            setUser
           );
-          setUser(p);
         }
       } finally {
         setLoading(false);
       }
     })();
+     return () => {
+      if (unSub) unSub();
+    };
   }, [sessionId]);
 
   if (loading || !session || !user) {

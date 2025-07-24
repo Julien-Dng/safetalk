@@ -249,7 +249,7 @@ import {
   signOut,
   User
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 
 export interface UserProfile {
@@ -374,6 +374,18 @@ export class AuthService {
       return null;
     }
   }
+
+  static subscribeToUserProfile(
+    uid: string,
+    callback: (profile: UserProfile | null) => void
+  ): () => void {
+    const userRef = doc(db, 'users', uid);
+    const unsubscribe = onSnapshot(userRef, snap => {
+      callback(snap.exists() ? (snap.data() as UserProfile) : null);
+    });
+    return unsubscribe;
+  }
+
 
   // Créer un nouveau profil utilisateur
   private static async createUserProfile(
