@@ -1,14 +1,24 @@
-import React from "react";
+import React from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
+  ScrollView,
   StyleSheet,
   SafeAreaView,
   StatusBar,
-} from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import {
+  Users,
+  Bot,
+  Search,
+  Clock,
+  MessageCircle,
+  User,
+  Settings,
+  ArrowLeft,
+} from 'lucide-react-native';
 
 interface EmptyStateProps {
   onBack: () => void;
@@ -20,43 +30,55 @@ interface EmptyStateProps {
   onShowAccount: () => void;
 }
 
-export function EmptyState({ 
+// Custom Card Component
+const Card = ({ children, style }: any) => (
+  <View style={[styles.card, style]}>
+    {children}
+  </View>
+);
+
+export function EmptyState({
   onBack,
   onFindPartner,
-  onChatWithAI, 
+  onChatWithAI,
   onResumeChat,
   hasActiveSession = false,
   activeSessionPartner,
   onShowAccount
 }: EmptyStateProps) {
   return (
-    <LinearGradient
-      colors={['#0f0f23', '#1a1a2e', '#16213e']}
+    <LinearGradient 
+      colors={['#0f0f23', '#1a1a2e', '#16213e']} 
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="light-content" backgroundColor="#0f0f23" />
         
-        {/* Header with Account Access Button */}
+        {/* Header with Back and Account Buttons */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={onBack} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#ffffff" />
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={onBack}
+            activeOpacity={0.7}
+          >
+            <ArrowLeft size={24} color="#ffffff" />
           </TouchableOpacity>
+          
           <TouchableOpacity
             style={styles.accountButton}
             onPress={onShowAccount}
+            activeOpacity={0.7}
           >
-            <Ionicons name="settings-outline" size={20} color="#c4b5fd" />
+            <Settings size={20} color="#c4b5fd" />
           </TouchableOpacity>
         </View>
 
-        {/* Main Content */}
-        <View style={styles.content}>
-          <View style={styles.contentContainer}>
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.mainContent}>
             {/* Illustration */}
             <View style={styles.illustrationSection}>
-              <View style={styles.iconContainer}>
-                <Ionicons name="people-outline" size={40} color="#7c3aed" />
+              <View style={styles.illustrationIcon}>
+                <Users size={40} color="#7c3aed" />
               </View>
               <Text style={styles.mainTitle}>
                 {hasActiveSession ? "Ready to chat?" : "No one is available right now"}
@@ -70,72 +92,83 @@ export function EmptyState({
             </View>
 
             {/* Actions */}
-            <View style={styles.actions}>
+            <View style={styles.actionsSection}>
               {/* Resume Chat Button - Only show if there's an active session */}
               {hasActiveSession && onResumeChat && (
                 <TouchableOpacity
+                  style={styles.resumeButton}
                   onPress={onResumeChat}
-                  style={[styles.actionButton, styles.resumeButton]}
+                  activeOpacity={0.8}
                 >
                   <LinearGradient
                     colors={['#6366f1', '#8b5cf6', '#a855f7']}
-                    style={styles.gradientButton}
+                    style={styles.resumeButtonGradient}
                   >
-                    <Ionicons name="chatbubble-outline" size={16} color="#ffffff" />
-                    <Text style={styles.resumeButtonText}>Resume Chat</Text>
-                    {activeSessionPartner && (
-                      <Text style={styles.partnerText}>
-                        with {activeSessionPartner}
-                      </Text>
-                    )}
+                    <View style={styles.resumeButtonContent}>
+                      <MessageCircle size={16} color="#ffffff" />
+                      <Text style={styles.resumeButtonText}>Resume Chat</Text>
+                      {activeSessionPartner && (
+                        <Text style={styles.resumeButtonPartner}>
+                          with {activeSessionPartner}
+                        </Text>
+                      )}
+                    </View>
                   </LinearGradient>
                 </TouchableOpacity>
               )}
 
               {/* Find a partner Button */}
               <TouchableOpacity
+                style={styles.findPartnerButton}
                 onPress={onFindPartner}
-                style={[styles.actionButton, styles.findPartnerButton]}
+                activeOpacity={0.8}
               >
-                <Ionicons name="search-outline" size={16} color="#ffffff" />
-                <Text style={styles.findPartnerButtonText}>Find a partner</Text>
+                <View style={styles.findPartnerButtonContent}>
+                  <Search size={16} color="#ffffff" />
+                  <Text style={styles.findPartnerButtonText}>Find a partner</Text>
+                </View>
               </TouchableOpacity>
 
+              {/* Divider */}
               <View style={styles.divider}>
                 <View style={styles.dividerLine} />
                 <Text style={styles.dividerText}>or</Text>
                 <View style={styles.dividerLine} />
               </View>
 
+              {/* Chat with AI Button */}
               <TouchableOpacity
+                style={styles.aiButton}
                 onPress={onChatWithAI}
-                style={[styles.actionButton, styles.aiButton]}
+                activeOpacity={0.8}
               >
-               {/* <Ionicons name="robot-outline" size={16} color="#c4b5fd" /> */}
-                <Text style={styles.aiButtonText}>Chat with AI Assistant</Text>
+                <View style={styles.aiButtonContent}>
+                  <Bot size={16} color="#c4b5fd" />
+                  <Text style={styles.aiButtonText}>Chat with AI Assistant</Text>
+                </View>
               </TouchableOpacity>
             </View>
 
             {/* Active Session Info - Only show if there's an active session */}
             {hasActiveSession && activeSessionPartner && (
-              <View style={styles.activeSessionCard}>
+              <Card style={styles.activeSessionCard}>
                 <View style={styles.activeSessionContent}>
-                  <View style={styles.avatarContainer}>
-                    <Ionicons name="person-outline" size={16} color="#ffffff" />
+                  <View style={styles.activeSessionIcon}>
+                    <User size={16} color="#ffffff" />
                   </View>
-                  <View style={styles.sessionInfo}>
-                    <Text style={styles.sessionTitle}>Active conversation</Text>
-                    <Text style={styles.sessionPartner}>{activeSessionPartner}</Text>
+                  <View style={styles.activeSessionInfo}>
+                    <Text style={styles.activeSessionTitle}>Active conversation</Text>
+                    <Text style={styles.activeSessionPartner}>{activeSessionPartner}</Text>
                   </View>
-                  <View style={styles.statusIndicator} />
+                  <View style={styles.activeSessionIndicator} />
                 </View>
-              </View>
+              </Card>
             )}
 
             {/* Tips */}
-            <View style={styles.tipsCard}>
+            <Card style={styles.tipsCard}>
               <View style={styles.tipsHeader}>
-                <Ionicons name="time-outline" size={16} color="#c4b5fd" />
+                <Clock size={16} color="#c4b5fd" />
                 <Text style={styles.tipsTitle}>Best times to connect</Text>
               </View>
               <View style={styles.tipsContent}>
@@ -152,21 +185,21 @@ export function EmptyState({
                   <Text style={styles.tipValue}>Global users</Text>
                 </View>
               </View>
-            </View>
+            </Card>
 
             {/* Community Stats */}
             <View style={styles.statsCard}>
               <View style={styles.statsGrid}>
                 <View style={styles.statItem}>
-                  <Text style={styles.statValue}>2.1K</Text>
+                  <Text style={styles.statNumber}>2.1K</Text>
                   <Text style={styles.statLabel}>Active today</Text>
                 </View>
                 <View style={styles.statItem}>
-                  <Text style={styles.statValue}>156</Text>
+                  <Text style={styles.statNumber}>156</Text>
                   <Text style={styles.statLabel}>Online now</Text>
                 </View>
                 <View style={styles.statItem}>
-                  <Text style={styles.statValue}>45K</Text>
+                  <Text style={styles.statNumber}>45K</Text>
                   <Text style={styles.statLabel}>Total chats</Text>
                 </View>
               </View>
@@ -175,12 +208,12 @@ export function EmptyState({
             {/* Footer */}
             <View style={styles.footer}>
               <Text style={styles.footerText}>New to Safetalk? Check out our</Text>
-              <TouchableOpacity>
-                <Text style={styles.footerLink}>Community Guidelines</Text>
+              <TouchableOpacity style={styles.footerLink}>
+                <Text style={styles.footerLinkText}>Community Guidelines</Text>
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </ScrollView>
       </SafeAreaView>
     </LinearGradient>
   );
@@ -197,9 +230,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
-   backButton: {
+  backButton: {
     padding: 4,
   },
   accountButton: {
@@ -207,19 +241,17 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
   },
-  contentContainer: {
-    width: '100%',
-    maxWidth: 320,
+  mainContent: {
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+    alignItems: 'center',
   },
   illustrationSection: {
     alignItems: 'center',
     marginBottom: 24,
   },
-  iconContainer: {
+  illustrationIcon: {
     width: 80,
     height: 80,
     backgroundColor: 'rgba(124, 58, 237, 0.3)',
@@ -240,42 +272,50 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
+    maxWidth: 320,
   },
-  actions: {
-    gap: 16,
+  actionsSection: {
+    width: '100%',
+    maxWidth: 320,
     marginBottom: 24,
-  },
-  actionButton: {
-    height: 48,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 8,
+    gap: 16,
   },
   resumeButton: {
+    height: 48,
+    borderRadius: 16,
     overflow: 'hidden',
   },
-  gradientButton: {
+  resumeButtonGradient: {
     flex: 1,
-    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 8,
     borderRadius: 16,
+  },
+  resumeButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   resumeButtonText: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '500',
   },
-  partnerText: {
+  resumeButtonPartner: {
     color: '#c4b5fd',
     fontSize: 12,
   },
   findPartnerButton: {
+    height: 48,
     backgroundColor: '#7c3aed',
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  findPartnerButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   findPartnerButtonText: {
     color: '#ffffff',
@@ -297,29 +337,44 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   aiButton: {
+    height: 48,
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: '#4c1d95',
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  aiButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   aiButtonText: {
     color: '#c4b5fd',
     fontSize: 16,
     fontWeight: '500',
   },
-  activeSessionCard: {
+  card: {
     backgroundColor: 'rgba(124, 58, 237, 0.3)',
     borderWidth: 1,
     borderColor: '#4c1d95',
     borderRadius: 16,
     padding: 16,
+    width: '100%',
+    maxWidth: 320,
     marginBottom: 16,
+  },
+  activeSessionCard: {
+    backgroundColor: 'rgba(124, 58, 237, 0.3)',
+    borderColor: '#4c1d95',
   },
   activeSessionContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  avatarContainer: {
+  activeSessionIcon: {
     width: 32,
     height: 32,
     backgroundColor: '#7c3aed',
@@ -327,32 +382,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  sessionInfo: {
+  activeSessionInfo: {
     flex: 1,
   },
-  sessionTitle: {
+  activeSessionTitle: {
     color: '#ffffff',
     fontSize: 14,
     fontWeight: '500',
   },
-  sessionPartner: {
+  activeSessionPartner: {
     color: '#c4b5fd',
     fontSize: 12,
+    marginTop: 2,
   },
-  statusIndicator: {
+  activeSessionIndicator: {
     width: 8,
     height: 8,
     backgroundColor: '#22c55e',
     borderRadius: 4,
-    opacity: 1,
   },
   tipsCard: {
     backgroundColor: 'rgba(124, 58, 237, 0.2)',
-    borderWidth: 1,
     borderColor: '#4c1d95',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
   },
   tipsHeader: {
     flexDirection: 'row',
@@ -371,6 +422,7 @@ const styles = StyleSheet.create({
   tipRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
   tipLabel: {
     color: '#a78bfa',
@@ -385,6 +437,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(124, 58, 237, 0.2)',
     borderRadius: 16,
     padding: 16,
+    width: '100%',
+    maxWidth: 320,
     marginBottom: 16,
   },
   statsGrid: {
@@ -394,15 +448,15 @@ const styles = StyleSheet.create({
   statItem: {
     alignItems: 'center',
   },
-  statValue: {
+  statNumber: {
     color: '#ffffff',
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 4,
   },
   statLabel: {
     color: '#c4b5fd',
     fontSize: 12,
+    marginTop: 4,
   },
   footer: {
     alignItems: 'center',
@@ -411,10 +465,15 @@ const styles = StyleSheet.create({
   footerText: {
     color: '#7c3aed',
     fontSize: 14,
+    textAlign: 'center',
   },
   footerLink: {
+    padding: 0,
+  },
+  footerLinkText: {
     color: '#a78bfa',
     fontSize: 14,
+    fontWeight: '500',
     textDecorationLine: 'underline',
   },
 });
