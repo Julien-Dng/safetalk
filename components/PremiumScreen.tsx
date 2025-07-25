@@ -54,24 +54,24 @@ export function PremiumScreen({ onBack, isPremium, onUpgrade }: PremiumScreenPro
       description: "Enjoy an uninterrupted, clean experience",
       color: "#8b5cf6" // purple-500
     },
-    {
-      icon: Shield,
-      title: "Message Control",
-      description: "Choose whether to save important conversations",
-      color: "#10b981" // green-500
-    },
+    // {
+    //   icon: Shield,
+    //   title: "Message Control",
+    //   description: "Choose whether to save important conversations",
+    //   color: "#10b981" // green-500
+    // },
     {
       icon: Users,
       title: "Priority Matching",
       description: "Get connected faster with priority queue",
       color: "#eab308" // yellow-500
     },
-    {
-      icon: Star,
-      title: "Exclusive Features",
-      description: "Access to beta features and special perks",
-      color: "#ec4899" // pink-500
-    },
+    // {
+    //   icon: Star,
+    //   title: "Exclusive Features",
+    //   description: "Access to beta features and special perks",
+    //   color: "#ec4899" // pink-500
+    // },
     {
       icon: Crown,
       title: "Premium Badge",
@@ -225,7 +225,7 @@ export function PremiumScreen({ onBack, isPremium, onUpgrade }: PremiumScreenPro
         )}
 
         {/* Premium Stats */}
-        {isPremium && (
+        {/* {isPremium && (
           <Card style={styles.statsCard}>
             <Text style={styles.statsTitle}>Your Premium Stats</Text>
             <View style={styles.statsContainer}>
@@ -239,10 +239,10 @@ export function PremiumScreen({ onBack, isPremium, onUpgrade }: PremiumScreenPro
               </View>
             </View>
           </Card>
-        )}
+        )} */}
 
         {/* FAQ */}
-        <Card style={styles.faqCard}>
+        {/* <Card style={styles.faqCard}>
           <Text style={styles.faqTitle}>Frequently Asked Questions</Text>
           <View style={styles.faqContainer}>
             <View style={styles.faqItem}>
@@ -264,7 +264,7 @@ export function PremiumScreen({ onBack, isPremium, onUpgrade }: PremiumScreenPro
               </Text>
             </View>
           </View>
-        </Card>
+        </Card> */}
 
         {/* Manage Subscription */}
         {isPremium && (

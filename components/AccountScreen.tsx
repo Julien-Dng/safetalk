@@ -554,9 +554,11 @@ export function AccountScreen({
                 </View>
                 <Text style={styles.creditsValue}>{credits ?? 0}</Text>
               </View>
-              <Text style={styles.creditsSubtext}>
+               {!isPremium && (
+                <Text style={styles.creditsSubtext}>
                 = {formatTime((credits ?? 0) * 6 * 60)} potential chat time
               </Text>
+                )}
             </View>
           </View>
         </View>
@@ -590,20 +592,25 @@ export function AccountScreen({
               <Text style={styles.actionSubtitle}>Manage your giftable credits</Text>
             </View>
           </TouchableOpacity>
-
-          {!isPremium && (
-            <TouchableOpacity 
-              style={styles.premiumButton}
-              onPress={onPremium}>
-              <View style={styles.premiumIcon}>
-                <Crown size={20} color="#ffffff" />
-              </View>
-              <View style={styles.actionContent}>
+          <TouchableOpacity 
+            style={!isPremium ? styles.premiumButton: styles.actionButton}
+            onPress={onPremium}>
+            <View style={styles.premiumIcon}>
+              <Crown size={20} color="#ffffff" />
+            </View>
+            <View style={styles.actionContent}>
+               {!isPremium ? (
                 <Text style={styles.premiumTitle}>Upgrade to Premium</Text>
-                <Text style={styles.premiumSubtitle}>Unlimited chats & exclusive features</Text>
-              </View>
-            </TouchableOpacity>
-          )}
+                ) : (
+                <Text style={styles.premiumTitle}>Manage my subscription</Text>
+                )}          
+            {!isPremium && (
+              <Text style={styles.premiumSubtitle}>
+                Unlimited chats & exclusive features
+              </Text>
+              )}
+            </View>
+          </TouchableOpacity>
         </View>
 
         {/* Separator */}
@@ -923,7 +930,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   //  backgroundColor: '#a855f7',
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#6b21a8',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,

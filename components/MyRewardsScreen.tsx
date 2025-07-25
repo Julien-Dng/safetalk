@@ -131,12 +131,12 @@ export function MyRewardsScreen({
 
             <View style={isPremium ? styles.creditsContainerPremium : styles.creditsContainer}>
               <View style={styles.creditsDisplay}>
-                {!isPremium ? (
+                {!isPremium && (
                   <Badge style={styles.nonPremiumFeature}>
                     <Text style={styles.premiumBadgeText}>Premium Feature</Text>
-                  </Badge>): (null)}
+                  </Badge>)}
                 <Text style={styles.creditsNumber}>{giftableCredits}</Text>
-                <Text style={styles.creditsLabel}>Giftable credits</Text>
+                <Text style={!isPremium ? styles.creditsLabel : styles.creditsPremiumLabel}>Giftable credits</Text>
               </View>
               
               {isPremium ? (
@@ -409,8 +409,13 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   creditsLabel: {
-     color: 'white',
-    fontSize: 12,
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  creditsPremiumLabel: {
+    color: 'white',
+    fontSize: 14,
     fontWeight: '600',
   },
   premiumInfo: {
@@ -423,9 +428,9 @@ const styles = StyleSheet.create({
   },
   infoText: {
     color: '#c4b5fd',
-    fontSize: 10,
+    fontSize: 11,
     flex: 1,
-    lineHeight: 20,
+    lineHeight: 16,
   },
   warningContainer: {
     marginTop: 12,
