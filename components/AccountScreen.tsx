@@ -922,7 +922,8 @@ const styles = StyleSheet.create({
   premiumButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#a855f7',
+  //  backgroundColor: '#a855f7',
+    backgroundColor: '#7c3aed',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,

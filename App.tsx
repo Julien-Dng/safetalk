@@ -781,7 +781,7 @@
 
 
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { StyleSheet, StatusBar } from "react-native";
 import { NavigationContainer, DarkTheme} from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
@@ -832,6 +832,7 @@ export default function App() {
   const [userData, setUserData] = useState<any>(null);
   const [chatSession, setChatSession] = useState<ChatSession | null>(null);
   const navigationRef = React.useRef<any>(null);
+  const profileUnsubscribe = useRef<(() => void) | null>(null);
 
   const freeTimeRemaining =
   userData?.isPremium
@@ -845,29 +846,46 @@ export default function App() {
   }
 
  useEffect(() => {
-   const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const profile = await AuthService.getUserProfile(user.uid);
-        setUserData(profile);
-        setIsAuthenticated(true);
-        
-        await updateDoc(doc(db, "users", user.uid), {
-          isOnline: true,
-          lastSeen: new Date().toISOString()
-        });
+  const unsubscribeAuth = onAuthStateChanged(auth, async user => {
+    if (user) {
+      const profile = await AuthService.getUserProfile(user.uid);
+      setUserData(profile);
+      setIsAuthenticated(true);
 
-        const sessions = await ChatService.getUserActiveSessions(user.uid);
-          setChatSession(sessions.length > 0 ? sessions[0] : null);
-          setSetupCompleted(profile.hasCompletedSetup);
-        } else {
-          setUserData(null);
-          setIsAuthenticated(false);
-          setSetupCompleted(false);
-          setChatSession(null);
-      }
-    });
-    return () => unsubscribe();
-  }, []);
+      profileUnsubscribe.current?.();
+      profileUnsubscribe.current = AuthService.subscribeToUserProfile(
+        user.uid,
+        updated => {
+          if (updated) {
+            setUserData(updated);
+          }
+        }
+      );
+
+      await updateDoc(doc(db, "users", user.uid), {
+        isOnline: true,
+        lastSeen: new Date().toISOString()
+      });
+
+      const sessions = await ChatService.getUserActiveSessions(user.uid);
+      setChatSession(sessions.length > 0 ? sessions[0] : null);
+      setSetupCompleted(profile.hasCompletedSetup);
+    } else {
+      profileUnsubscribe.current?.();
+      profileUnsubscribe.current = null;
+      setUserData(null);
+      setIsAuthenticated(false);
+      setSetupCompleted(false);
+      setChatSession(null);
+    }
+  });
+
+  return () => {
+    unsubscribeAuth();
+    profileUnsubscribe.current?.();
+    profileUnsubscribe.current = null;
+  };
+}, []);
 
   const handleSignIn = async (_username: string,profile: any) => {
     setUserData(profile);
@@ -910,6 +928,8 @@ export default function App() {
   
 const handleLogout = async () => {
   await AuthService.signOut();
+  profileUnsubscribe.current?.();
+  profileUnsubscribe.current = null;
   setIsAuthenticated(false);
   setUserData(null);
   setSetupCompleted(false);

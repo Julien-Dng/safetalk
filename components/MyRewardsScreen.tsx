@@ -129,8 +129,12 @@ export function MyRewardsScreen({
               </View>
             </View>
 
-            <View style={styles.creditsContainer}>
+            <View style={isPremium ? styles.creditsContainerPremium : styles.creditsContainer}>
               <View style={styles.creditsDisplay}>
+                {!isPremium ? (
+                  <Badge style={styles.nonPremiumFeature}>
+                    <Text style={styles.premiumBadgeText}>Premium Feature</Text>
+                  </Badge>): (null)}
                 <Text style={styles.creditsNumber}>{giftableCredits}</Text>
                 <Text style={styles.creditsLabel}>Giftable credits</Text>
               </View>
@@ -140,7 +144,7 @@ export function MyRewardsScreen({
                   <View style={styles.infoRow}>
                     <Info size={16} color="#60a5fa" />
                     <Text style={styles.infoText}>
-                      You can send credits to your chat partner if they're on a free plan and their session ends.
+                      You can send credits to your chat partner if they're on a free plan.
                     </Text>
                   </View>
                   
@@ -153,21 +157,24 @@ export function MyRewardsScreen({
                   )}
                 </View>
               ) : (
-                <View style={styles.nonPremiumInfo}>
-                  <Badge>
-                    <Text style={styles.premiumBadgeText}>Premium Feature</Text>
-                  </Badge>
-                  <Text style={styles.upgradeText}>
-                    Upgrade to Premium to gift credits to other users
-                  </Text>
-                </View>
+                null
               )}
             </View>
           </View>
         </Card>
+        {!isPremium ? (
+        <TouchableOpacity style={styles.upgradeButton} activeOpacity={0.8}>
+          <LinearGradient
+            colors={['#7c3aed', '#7c3aed']}
+            style={styles.upgradeButtonGradient}
+          >
+            <Text style={styles.upgradeButtonText}>Upgrade to Premium</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+        ): ( null )}
 
         {/* Convert Unused Credits */}
-        {isPremium && (
+        {/* {isPremium && (
           <Card style={styles.section}>
             <View style={styles.sectionContent}>
               <View style={styles.sectionHeader}>
@@ -228,7 +235,7 @@ export function MyRewardsScreen({
               </View>
             </View>
           </Card>
-        )}
+        )} */}
 
         {/* Available Rewards Preview */}
         {isPremium && rewardsAvailable > 0 && (
@@ -278,7 +285,7 @@ export function MyRewardsScreen({
         )}
 
         {/* Premium Upgrade CTA for Free Users */}
-        {!isPremium && (
+        {/* {!isPremium && (
           <Card style={styles.upgradeCard}>
             <View style={styles.upgradeContent}>
               <LinearGradient
@@ -305,7 +312,7 @@ export function MyRewardsScreen({
               </TouchableOpacity>
             </View>
           </Card>
-        )}
+        )} */}
       </ScrollView>
     </SafeAreaView>
   );
@@ -384,6 +391,11 @@ const styles = StyleSheet.create({
   creditsContainer: {
     backgroundColor: 'rgba(88, 28, 135, 0.5)',
     borderRadius: 16,
+    paddingTop: 16,
+  },
+  creditsContainerPremium: {
+    backgroundColor: 'rgba(88, 28, 135, 0.5)',
+    borderRadius: 16,
     padding: 16,
   },
   creditsDisplay: {
@@ -397,8 +409,9 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   creditsLabel: {
-    color: '#c4b5fd',
-    fontSize: 14,
+     color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
   },
   premiumInfo: {
     gap: 8,
@@ -410,7 +423,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     color: '#c4b5fd',
-    fontSize: 14,
+    fontSize: 10,
     flex: 1,
     lineHeight: 20,
   },
@@ -427,7 +440,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
+  nonPremiumFeature:{
+    flexDirection: 'row',
+    justifyContent: 'center'
+  },
   nonPremiumInfo: {
+    justifyContent: 'center',
     alignItems: 'center',
     gap: 8,
   },
@@ -435,7 +453,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 6,
-    alignSelf: 'flex-start',
+    alignSelf: 'center',
+    marginBottom: 22,
   },
   badgeDefault: {
     backgroundColor: '#a855f7',
@@ -448,6 +467,7 @@ const styles = StyleSheet.create({
   premiumBadgeText: {
     color: '#ffffff',
     fontSize: 12,
+    textAlign: 'center',
     fontWeight: '600',
   },
   upgradeText: {
