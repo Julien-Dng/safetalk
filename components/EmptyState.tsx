@@ -166,7 +166,7 @@ export function EmptyState({
             )}
 
             {/* Tips */}
-            <Card style={styles.tipsCard}>
+            {/* <Card style={styles.tipsCard}>
               <View style={styles.tipsHeader}>
                 <Clock size={16} color="#c4b5fd" />
                 <Text style={styles.tipsTitle}>Best times to connect</Text>
@@ -187,8 +187,7 @@ export function EmptyState({
               </View>
             </Card>
 
-            {/* Community Stats */}
-            <View style={styles.statsCard}>
+            {/* <View style={styles.statsCard}>
               <View style={styles.statsGrid}>
                 <View style={styles.statItem}>
                   <Text style={styles.statNumber}>2.1K</Text>
@@ -201,9 +200,9 @@ export function EmptyState({
                 <View style={styles.statItem}>
                   <Text style={styles.statNumber}>45K</Text>
                   <Text style={styles.statLabel}>Total chats</Text>
-                </View>
+                </View
               </View>
-            </View>
+            </View>  */}
 
             {/* Footer */}
             <View style={styles.footer}>

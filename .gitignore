@@ -8,3 +8,4 @@
   8  .DS_Store
   9  .idea/
 10  # Misc
+11  .env*

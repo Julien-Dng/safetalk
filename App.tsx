@@ -908,9 +908,22 @@ export default function App() {
   });
 };
   
-  const handleChatWithAI = () => {
-    console.log("🤖 Chat with AI");
-  };
+  const handleChatWithAI = async () => {
+  if (!userData) return;
+  try {
+    const aiSession = await ChatService.createChatSession(
+      userData,
+      null,
+      'ai'
+    );
+    setChatSession(aiSession);
+    navigationRef.current?.navigate('Chat', {
+      sessionId: aiSession.id,
+    });
+  } catch (error) {
+    console.error('Failed to start AI chat:', error);
+  }
+};
 
   const handleCloseChat = (
     _freeTimeLeft: number,
