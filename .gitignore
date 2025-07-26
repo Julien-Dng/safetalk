@@ -1,11 +1,10 @@
   1  node_modules/
-     2  # Build artifacts
-     3  build/
-     4  dist/
-     5  .expo/
-     6  .expo-shared/
-     7  *.log
-     8  .DS_Store
-     9  .idea/
-    10  # Misc
-    11  .env*
+  2  # Build artifacts
+  3  build/
+  4  dist/
+  5  .expo/
+  6  .expo-shared/
+  7  *.log
+  8  .DS_Store
+  9  .idea/
+10  # Misc
