@@ -6,6 +6,8 @@ import ChatScreenWithProps from "./ChatScreenWithProps";
 import { ChatService, ChatSession } from "../services/chatService";
 import { auth } from "../config/firebase";
 import { AuthService, UserProfile } from "../services/authService";
+import { MatchingService } from "../services/matchingService";
+
 
 const DAILY_FREE_LIMIT_SEC = 20 * 60;
 
@@ -42,6 +44,31 @@ export default function ChatScreen({ onCloseChat }: ChatScreenProps) {
       if (unSub) unSub();
     };
   }, [sessionId]);
+
+    useEffect(() => {
+    if (!loading && session && user) {
+      const hasPartner = session.participants.length > 1;
+      const isAI = session.participantUsernames.includes("@SafetalkAI");
+      const isActive = session.status === "active";
+
+      if (!isAI && (!hasPartner || !isActive)) {
+        (async () => {
+          setLoading(true);
+          try {
+            const { promise } = await MatchingService.findMatch(user);
+            const result = await promise;
+            if (result.success && result.chatId) {
+              const newSession = await ChatService.getSessionById(result.chatId);
+              setSession(newSession);
+              navigation.replace("Chat", { sessionId: newSession!.id });
+            }
+          } finally {
+            setLoading(false);
+          }
+        })();
+      }
+    }
+  }, [loading, session, user]);
 
   if (loading || !session || !user) {
     return (

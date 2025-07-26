@@ -17,6 +17,8 @@ import {
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { UserProfile } from './authService';
+import { interlocuteurs } from '../interlocuteurs';
+
 
 export interface ChatMessage {
   id: string;
@@ -151,7 +153,7 @@ export class ChatService {
         createdAt: new Date(),
         lastMessageAt: new Date()
       } as ChatSession;
-    } catch (error: any) {
+    }   catch (error) {
       console.error('Error creating chat session:', error);
       throw new Error('Failed to create chat session');
     }
@@ -187,7 +189,12 @@ export class ChatService {
 
       // Simulate AI response for AI chats
       if (type === 'text' && senderId !== 'system') {
-        this.scheduleAIResponse(chatId, text);
+              const session = await this.getSessionById(chatId);
+        if (session?.isAIChat) {
+          this.scheduleAIResponse(chatId, text);
+        } else {
+          this.scheduleHumanResponse(chatId);
+        }
       }
 
       return {
@@ -195,7 +202,7 @@ export class ChatService {
         ...messageData,
         timestamp: new Date()
       } as ChatMessage;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error sending message:', error);
       throw new Error('Failed to send message');
     }
@@ -224,7 +231,7 @@ export class ChatService {
       // Store unsubscribe function
       this.messageListeners.set(chatId, unsubscribe);
       return unsubscribe;
-    } catch (error: any) {
+     } catch (error) {
       console.error('Error subscribing to messages:', error);
       return () => {}; // Return empty function as fallback
     }
@@ -401,6 +408,28 @@ export class ChatService {
       }
     }, 2000 + Math.random() * 3000); // 2-5 second delay
   }
+
+    private static scheduleHumanResponse(chatId: string): void {
+    setTimeout(async () => {
+      try {
+        const humanResponses = [
+          'Hi there! How are you doing?',
+          "That's interesting, tell me more!",
+          'I appreciate you sharing that.',
+          "I'm here to listen if you want to talk.",
+          'Sounds good to me.',
+          'Thanks for telling me!'
+        ];
+
+        const randomUser = interlocuteurs[Math.floor(Math.random() * interlocuteurs.length)];
+        const response = humanResponses[Math.floor(Math.random() * humanResponses.length)];
+        await this.sendMessage(chatId, randomUser.uid, randomUser.username, response, 'text');
+      } catch (error) {
+        console.error('Error sending human response:', error);
+      }
+    }, 2000 + Math.random() * 3000);
+  }
+
 
   // Get welcome message based on user role
   private static getWelcomeMessage(role: string, isAIChat: boolean): string {

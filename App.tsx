@@ -1039,9 +1039,6 @@ const handleUpdateUsername = async (newUsername: string) => {
                 onBack={() => navigationRef.current?.navigate("Setup")}
                 onFindPartner={handleFindPartner}
                 onChatWithAI={handleChatWithAI}
-                onResumeChat={hasActiveSession() ? handleResumeChat : undefined}
-                hasActiveSession={hasActiveSession()}
-                activeSessionPartner={getPartnerUsername(chatSession, userData?.uid)}
                 onShowAccount={() => navigationRef.current?.navigate("Account")}
               />
             )}

@@ -80,7 +80,7 @@ export class MatchingService {
           maxWaitTime: this.MAX_WAIT_TIME
         },
         status: 'waiting',
-        createdAt: serverTimestamp()
+        createdAt: new Date()
       };
 
       const requestRef = await addDoc(collection(db, 'matchmaking'), matchRequest);
