@@ -24,9 +24,6 @@ interface EmptyStateProps {
   onBack: () => void;
   onFindPartner: () => void;
   onChatWithAI: () => void;
-  onResumeChat?: () => void;
-  hasActiveSession?: boolean;
-  activeSessionPartner?: string;
   onShowAccount: () => void;
 }
 
@@ -41,9 +38,6 @@ export function EmptyState({
   onBack,
   onFindPartner,
   onChatWithAI,
-  onResumeChat,
-  hasActiveSession = false,
-  activeSessionPartner,
   onShowAccount
 }: EmptyStateProps) {
   return (
@@ -80,43 +74,15 @@ export function EmptyState({
               <View style={styles.illustrationIcon}>
                 <Users size={40} color="#7c3aed" />
               </View>
-              <Text style={styles.mainTitle}>
-                {hasActiveSession ? "Ready to chat?" : "No one is available right now"}
-              </Text>
+              <Text style={styles.mainTitle}>No one is available right now</Text>
               <Text style={styles.mainSubtitle}>
-                {hasActiveSession 
-                  ? "You can resume your conversation or find a new chat partner."
-                  : "Don't worry, people join Safetalk throughout the day. You can try again in a few minutes."
-                }
+                Don't worry, people join Safetalk throughout the day. You can
+                try again in a few minutes.
               </Text>
             </View>
 
             {/* Actions */}
             <View style={styles.actionsSection}>
-              {/* Resume Chat Button - Only show if there's an active session */}
-              {hasActiveSession && onResumeChat && (
-                <TouchableOpacity
-                  style={styles.resumeButton}
-                  onPress={onResumeChat}
-                  activeOpacity={0.8}
-                >
-                  <LinearGradient
-                    colors={['#6366f1', '#8b5cf6', '#a855f7']}
-                    style={styles.resumeButtonGradient}
-                  >
-                    <View style={styles.resumeButtonContent}>
-                      <MessageCircle size={16} color="#ffffff" />
-                      <Text style={styles.resumeButtonText}>Resume Chat</Text>
-                      {activeSessionPartner && (
-                        <Text style={styles.resumeButtonPartner}>
-                          with {activeSessionPartner}
-                        </Text>
-                      )}
-                    </View>
-                  </LinearGradient>
-                </TouchableOpacity>
-              )}
-
               {/* Find a partner Button */}
               <TouchableOpacity
                 style={styles.findPartnerButton}
@@ -148,23 +114,7 @@ export function EmptyState({
                 </View>
               </TouchableOpacity>
             </View>
-
-            {/* Active Session Info - Only show if there's an active session */}
-            {hasActiveSession && activeSessionPartner && (
-              <Card style={styles.activeSessionCard}>
-                <View style={styles.activeSessionContent}>
-                  <View style={styles.activeSessionIcon}>
-                    <User size={16} color="#ffffff" />
-                  </View>
-                  <View style={styles.activeSessionInfo}>
-                    <Text style={styles.activeSessionTitle}>Active conversation</Text>
-                    <Text style={styles.activeSessionPartner}>{activeSessionPartner}</Text>
-                  </View>
-                  <View style={styles.activeSessionIndicator} />
-                </View>
-              </Card>
-            )}
-
+    
             {/* Tips */}
             {/* <Card style={styles.tipsCard}>
               <View style={styles.tipsHeader}>
@@ -278,31 +228,6 @@ const styles = StyleSheet.create({
     maxWidth: 320,
     marginBottom: 24,
     gap: 16,
-  },
-  resumeButton: {
-    height: 48,
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  resumeButtonGradient: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 16,
-  },
-  resumeButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  resumeButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  resumeButtonPartner: {
-    color: '#c4b5fd',
-    fontSize: 12,
   },
   findPartnerButton: {
     height: 48,
