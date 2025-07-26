@@ -558,11 +558,9 @@ interface CachedMatches {
 export class MatchingService {
   // ⚡ Configuration ultra-rapide et debugging
   private static readonly MAX_WAIT_TIME = 15000; // 15 secondes optimisé
-  private static readonly MATCH_INTERVAL_MS = 300; // 300ms ultra-rapide
   private static readonly MAX_SKIP_COUNT = 5;
   private static readonly CACHE_TTL = 1000; // 1 seconde
   private static readonly INSTANT_MATCH_DELAY = 50; // 50ms
-  private static readonly DEBUG_MODE = true; // 🐛 Debug activé temporairement
   
   // 🧠 Cache intelligent
   private static currentRequestCache = new Map<string, MatchRequest>();
@@ -571,7 +569,6 @@ export class MatchingService {
   
   // 📡 Listeners et intervals
   private static matchListeners = new Map<string, () => void>();
-  private static matchIntervals = new Map<string, NodeJS.Timeout>();
   private static globalListenerActive = false;
   private static globalMatchUnsubscribe: (() => void) | null = null;
   private static cacheCleanupInterval: NodeJS.Timeout | null = null;
@@ -583,29 +580,17 @@ export class MatchingService {
     preferredRole: 'talk' | 'listen' | 'both' | 'any' = 'any'
   ): Promise<{ requestId: string; promise: Promise<MatchResult> }> {
     try {
-      if (this.DEBUG_MODE) {
-        console.log('🔍 Finding partner...', { 
-          userId: user.uid, 
-          role: user.role, 
-          avoidUsers: avoidUsers.length 
-        });
-      }
-
       // 1. NETTOYER LES ANCIENNES REQUÊTES DU MÊME UTILISATEUR
       await this.cleanupUserRequests(user.uid);
 
       // 2. Setup listener global si pas déjà fait
       if (!this.globalListenerActive) {
-        if (this.DEBUG_MODE) console.log('📡 Setting up global listener...');
         this.setupGlobalMatchListener();
         this.setupCacheCleanup();
       }
 
       // 3. Vérifier s'il y a déjà des utilisateurs en attente
       const existingMatches = await this.getWaitingUsers();
-      if (this.DEBUG_MODE) {
-        console.log(`👥 Found ${existingMatches.length} users waiting (after cleanup)`);
-      }
 
       // 4. Créer match request
       const matchRequest: Omit<MatchRequest, 'id'> = {
@@ -629,10 +614,6 @@ export class MatchingService {
       const requestRef = await addDoc(collection(db, 'matchmaking'), matchRequest);
       const requestId = requestRef.id;
 
-      if (this.DEBUG_MODE) {
-        console.log('✅ Match request created:', requestId);
-      }
-
       // 5. Cache la requête
       this.currentRequestCache.set(requestId, {
         id: requestId,
@@ -654,9 +635,7 @@ export class MatchingService {
 
   // 🧹 Nettoyer les anciennes requêtes du même utilisateur (requête simple)
   private static async cleanupUserRequests(userId: string): Promise<void> {
-    try {
-      if (this.DEBUG_MODE) console.log(`🧹 Cleaning up old requests for user: ${userId}`);
-      
+    try {      
       // Requête simple pour éviter les index composites
       const q = query(
         collection(db, 'matchmaking'),
@@ -678,7 +657,6 @@ export class MatchingService {
       
       if (deletePromises.length > 0) {
         await Promise.all(deletePromises);
-        if (this.DEBUG_MODE) console.log(`🗑️ Deleted ${deletePromises.length} old requests`);
       }
     } catch (error) {
       console.error('❌ Error cleaning up user requests:', error);
@@ -715,7 +693,6 @@ export class MatchingService {
     return new Promise((resolve) => {
       let resolved = false;
       let timeoutId: NodeJS.Timeout;
-      let intervalId: NodeJS.Timeout;
 
       // Timeout optimisé
       timeoutId = setTimeout(async () => {
@@ -739,17 +716,7 @@ export class MatchingService {
             error: 'Matching timeout'
           });
         }
-        
-        clearInterval(intervalId);
-        this.matchIntervals.delete(requestId);
       }, this.MAX_WAIT_TIME);
-
-      // Interval optimisé avec cache
-      intervalId = setInterval(() => {
-        this.attemptOptimizedMatch(requestId);
-      }, this.MATCH_INTERVAL_MS);
-      
-      this.matchIntervals.set(requestId, intervalId);
 
       // Listener pour match updates
       const requestRef = doc(db, 'matchmaking', requestId);
@@ -762,9 +729,6 @@ export class MatchingService {
           if (data.status === 'matched' && data.matchedWith) {
             resolved = true;
             clearTimeout(timeoutId);
-            clearInterval(intervalId);
-            this.matchIntervals.delete(requestId);
-            
             try {
               const partner = await this.getCachedPartnerProfile(data.matchedWith);
               if (!partner) {
@@ -804,29 +768,15 @@ export class MatchingService {
 
   // 🚀 Matching instantané sans utilisateurs de test (pour éviter les erreurs de permissions)
   private static async tryInstantMatch(requestId: string): Promise<void> {
-    try {
-      if (this.DEBUG_MODE) console.log('⚡ Trying instant match...');
-      
+    try {      
       const currentRequest = this.currentRequestCache.get(requestId);
       if (!currentRequest) return;
 
       const compatibleMatches = await this.findOptimizedCompatibleMatches(currentRequest);
       
       if (compatibleMatches.length > 0) {
-        if (this.DEBUG_MODE) console.log('🎯 Instant match found!');
         await this.createOptimizedMatch(currentRequest, compatibleMatches[0]);
-      } else if (this.DEBUG_MODE) {
-        console.log('⏳ No instant match, will try periodically...');
-        
-        // Désactivé temporairement les utilisateurs de test pour éviter les erreurs de permissions
-        // En mode debug, afficher qu'on cherche des vrais utilisateurs
-        setTimeout(() => {
-          const stillWaiting = this.currentRequestCache.get(requestId);
-          if (stillWaiting && stillWaiting.status === 'waiting') {
-            console.log('🔍 Still searching for real users...');
-          }
-        }, 3000);
-      }
+      } 
     } catch (error) {
       console.error('❌ Error in instant match:', error);
     }
@@ -835,18 +785,12 @@ export class MatchingService {
   // ⚡ Tentative de match optimisée avec debugging complet
   private static async attemptOptimizedMatch(requestId: string): Promise<void> {
     try {
-      if (this.DEBUG_MODE) {
-        console.log(`🎯 Attempting match for ${requestId}...`);
-      }
-
       // Vérifier le cache d'abord
       let currentRequest = this.currentRequestCache.get(requestId);
       
       if (!currentRequest) {
-        if (this.DEBUG_MODE) console.log('📥 Fetching request from DB...');
         const requestDoc = await getDoc(doc(db, 'matchmaking', requestId));
         if (!requestDoc.exists()) {
-          if (this.DEBUG_MODE) console.log('❌ Request not found in DB');
           return;
         }
         
@@ -859,7 +803,6 @@ export class MatchingService {
       }
 
       if (currentRequest.status !== 'waiting') {
-        if (this.DEBUG_MODE) console.log(`⏸️ Request status: ${currentRequest.status}`);
         return;
       }
 
@@ -869,19 +812,7 @@ export class MatchingService {
       // Chercher matches compatibles
       const compatibleMatches = await this.findOptimizedCompatibleMatches(currentRequest);
 
-      if (this.DEBUG_MODE) {
-        console.log(`🔍 Found ${compatibleMatches.length} compatible matches`);
-        if (compatibleMatches.length > 0) {
-          console.log('🎯 Best match:', {
-            id: compatibleMatches[0].id,
-            username: compatibleMatches[0].userProfile.username,
-            role: compatibleMatches[0].userProfile.role
-          });
-        }
-      }
-
       if (compatibleMatches.length > 0) {
-        if (this.DEBUG_MODE) console.log('🚀 Creating match...');
         await this.createOptimizedMatch(currentRequest, compatibleMatches[0]);
       }
     } catch (error) {
@@ -892,20 +823,11 @@ export class MatchingService {
   // 🎯 Recherche de matches avec debugging complet
   private static async findOptimizedCompatibleMatches(request: MatchRequest): Promise<MatchRequest[]> {
     try {
-      if (this.DEBUG_MODE) {
-        console.log('🔍 Searching compatible matches for:', {
-          id: request.id,
-          role: request.userProfile.role,
-          avoidUsers: request.preferences.avoidUsers.length
-        });
-      }
-
       // Vérifier le cache d'abord
       const cacheKey = `${request.id}-${request.userProfile.role}`;
       const cached = this.compatibleMatchesCache.get(cacheKey);
       
       if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
-        if (this.DEBUG_MODE) console.log('💾 Using cached matches');
         const filteredMatches = cached.matches.filter(m => this.isQuickCompatible(request, m));
         return this.prioritizeMatches(filteredMatches);
       }
@@ -913,8 +835,6 @@ export class MatchingService {
       // Requête simple sans index composites
       const queries = this.buildOptimizedQueries(request);
       
-      if (this.DEBUG_MODE) console.log(`📝 Executing ${queries.length} queries...`);
-
       // Paralléliser toutes les requêtes
       const queryPromises = queries.map(q => getDocs(q));
       const results = await Promise.all(queryPromises);
@@ -935,28 +855,6 @@ export class MatchingService {
         });
       });
 
-      if (this.DEBUG_MODE) {
-        console.log(`📊 Match analysis:`, {
-          totalFound: allMatches.length,
-          afterFiltering: potentialMatches.length,
-          currentUserId: request.userId
-        });
-        
-        if (allMatches.length > 0 && potentialMatches.length === 0) {
-          console.log('🔍 All matches details:');
-          allMatches.forEach(match => {
-            console.log({
-              id: match.id,
-              userId: match.userId,
-              role: match.userProfile.role,
-              status: match.status,
-              isCurrentUser: match.userId === request.userId,
-              isInAvoidList: request.preferences.avoidUsers.includes(match.userId)
-            });
-          });
-        }
-      }
-
       // Cache le résultat
       this.compatibleMatchesCache.set(cacheKey, {
         matches: potentialMatches,
@@ -974,19 +872,16 @@ export class MatchingService {
   private static isVeryPermissiveCompatible(request1: MatchRequest, request2: MatchRequest): boolean {
     // Check STRICT pour éviter soi-même
     if (request1.userId === request2.userId) {
-      if (this.DEBUG_MODE) console.log('❌ Same userId - BLOCKED');
       return false;
     }
     
     // Check status
     if (request2.status !== 'waiting') {
-      if (this.DEBUG_MODE) console.log('❌ Not waiting status:', request2.status);
       return false;
     }
     
     // Check avoid list
     if (request1.preferences.avoidUsers.includes(request2.userId)) {
-      if (this.DEBUG_MODE) console.log('❌ In avoid list');
       return false;
     }
 
@@ -996,15 +891,11 @@ export class MatchingService {
 
     // Pour le debugging, on accepte presque tout sauf talk+talk et listen+listen
     if (role1 === 'talk' && role2 === 'talk') {
-      if (this.DEBUG_MODE) console.log('❌ Both want to talk');
       return false;
     }
     if (role1 === 'listen' && role2 === 'listen') {
-      if (this.DEBUG_MODE) console.log('❌ Both want to listen');
       return false;
     }
-
-    if (this.DEBUG_MODE) console.log('✅ Compatible match found!');
     return true;
   }
 
@@ -1060,8 +951,8 @@ export class MatchingService {
       if (!a.userProfile.isPremium && b.userProfile.isPremium) return 1;
       
       // 2. Tri par temps de création (plus ancien = priorité)
-      const timeA = (a.createdAt as any).toMillis ? (a.createdAt as any).toMillis() : new Date(a.createdAt).getTime();
-      const timeB = (b.createdAt as any).toMillis ? (b.createdAt as any).toMillis() : new Date(b.createdAt).getTime();
+      const timeA = (a.createdAt as any).toMillis ? (a.createdAt as any).toMillis() : new Date(a.createdAt as any).getTime();
+      const timeB = (b.createdAt as any).toMillis ? (b.createdAt as any).toMillis() : new Date(b.createdAt as any).getTime();
       return timeA - timeB; // Plus ancien en premier
       
       // 3. Rating plus élevé (si on veut l'ajouter plus tard)
@@ -1072,13 +963,6 @@ export class MatchingService {
   // ⚡ Création de match optimisée avec debugging
   private static async createOptimizedMatch(request1: MatchRequest, request2: MatchRequest): Promise<void> {
     try {
-      if (this.DEBUG_MODE) {
-        console.log('🚀 Creating match between:', {
-          user1: { id: request1.id, username: request1.userProfile.username, role: request1.userProfile.role },
-          user2: { id: request2.id, username: request2.userProfile.username, role: request2.userProfile.role }
-        });
-      }
-
       await runTransaction(db, async (transaction) => {
         const request1Ref = doc(db, 'matchmaking', request1.id);
         const request2Ref = doc(db, 'matchmaking', request2.id);
@@ -1090,7 +974,6 @@ export class MatchingService {
         ]);
 
         if (!doc1.exists() || !doc2.exists()) {
-          if (this.DEBUG_MODE) console.log('❌ One or both requests no longer exist');
           return;
         }
         
@@ -1098,10 +981,6 @@ export class MatchingService {
         const data2 = doc2.data() as MatchRequest;
         
         if (data1.status !== 'waiting' || data2.status !== 'waiting') {
-          if (this.DEBUG_MODE) console.log('❌ One or both requests no longer waiting', {
-            status1: data1.status,
-            status2: data2.status
-          });
           return;
         }
 
@@ -1118,7 +997,6 @@ export class MatchingService {
           matchedAt: serverTimestamp()
         });
 
-        if (this.DEBUG_MODE) console.log('✅ Match created successfully!');
       });
 
       // Clear from cache
@@ -1132,8 +1010,6 @@ export class MatchingService {
 
   // 🤖 Créer un utilisateur de test automatique si pas de matches
   private static async createTestUserIfNeeded(originalRequest: MatchRequest): Promise<MatchRequest | null> {
-    if (!this.DEBUG_MODE) return null;
-
     try {
       // Créer un utilisateur de test avec un rôle compatible
       const testRole = originalRequest.userProfile.role === 'talk' ? 'listen' : 
@@ -1211,9 +1087,7 @@ export class MatchingService {
   }
 
   // 🧹 Nettoyer les anciens utilisateurs de test
-  private static async cleanupTestUsers(): Promise<void> {
-    if (!this.DEBUG_MODE) return;
-    
+  private static async cleanupTestUsers(): Promise<void> {    
     try {
       const q = query(
         collection(db, 'matchmaking'),
@@ -1227,9 +1101,9 @@ export class MatchingService {
       snapshot.forEach(doc => {
         const data = doc.data() as MatchRequest;
         if (data.userId.startsWith('test-user-')) {
-          const createdTime = (data.createdAt as any).toMillis ? 
-            (data.createdAt as any).toMillis() : 
-            new Date(data.createdAt).getTime();
+          const createdTime = (data.createdAt as any).toMillis ?
+            (data.createdAt as any).toMillis() :
+            new Date(data.createdAt as any).getTime();
           
           // Supprimer les utilisateurs de test de plus de 5 minutes
           if (Date.now() - createdTime > 300000) {
@@ -1392,22 +1266,12 @@ export class MatchingService {
       unsubscribe();
       this.matchListeners.delete(requestId);
     }
-
-    const intervalId = this.matchIntervals.get(requestId);
-    if (intervalId) {
-      clearInterval(intervalId);
-      this.matchIntervals.delete(requestId);
-    }
   }
 
   static cleanup(): void {
     // Cleanup listeners
     this.matchListeners.forEach(unsubscribe => unsubscribe());
     this.matchListeners.clear();
-    
-    // Cleanup intervals
-    this.matchIntervals.forEach(intervalId => clearInterval(intervalId));
-    this.matchIntervals.clear();
     
     // Cleanup global listener
     if (this.globalMatchUnsubscribe) {
