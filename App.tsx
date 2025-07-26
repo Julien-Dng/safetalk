@@ -808,6 +808,8 @@ import { RatingPopup } from "./components/RatingPopup";
 import { LowTimeAlert } from "./components/LowTimeAlert";
 import { InterstitialAd } from "./components/InterstitialAd";
 import { AuthService } from "./services/authService";
+import { MatchingService } from "./services/matchingService";
+import { interlocuteurs } from "./interlocuteurs";
 
 // Firebase
 import { auth, db } from "./config/firebase";
@@ -897,16 +899,27 @@ export default function App() {
   };
 
   const handleFindPartner = async () => {
-  console.log("🔍 Finding partner...");
-  const newSession = await ChatService.createChatSession(
-    userData,
-    null,         // ou user2 si humain ≠ AI
-    "human"       // ou "ai"
-  );
-  navigationRef.current?.navigate("Chat", {
-    sessionId: newSession.id,
-  });
-};
+    if (!userData) return;
+      try {
+        const { requestId, promise } = await MatchingService.findMatch(userData);
+        const result = await promise;
+        if (result.success && result.chatId) {
+          const session = await ChatService.getSessionById(result.chatId);
+          if (session) {
+            setChatSession(session);
+            navigationRef.current?.navigate("Chat", { sessionId: session.id });
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to find partner:', error);
+      }
+
+    const randomUser = interlocuteurs[Math.floor(Math.random() * interlocuteurs.length)];
+    const mockSession = await ChatService.createChatSession(userData, randomUser, 'human');
+    setChatSession(mockSession);
+    navigationRef.current?.navigate("Chat", { sessionId: mockSession.id });
+  };
   
   const handleChatWithAI = async () => {
   if (!userData) return;

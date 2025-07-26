@@ -7,6 +7,7 @@ import { ChatService, ChatSession } from "../services/chatService";
 import { auth } from "../config/firebase";
 import { AuthService, UserProfile } from "../services/authService";
 import { MatchingService } from "../services/matchingService";
+import { interlocuteurs } from "../interlocuteurs";
 
 
 const DAILY_FREE_LIMIT_SEC = 20 * 60;
@@ -61,10 +62,15 @@ export default function ChatScreen({ onCloseChat }: ChatScreenProps) {
               const newSession = await ChatService.getSessionById(result.chatId);
               setSession(newSession);
               navigation.replace("Chat", { sessionId: newSession!.id });
+              return;
             }
-          } finally {
-            setLoading(false);
+          } catch (error) {
+            console.error('Failed to find partner:', error);
           }
+          const randomUser = interlocuteurs[Math.floor(Math.random() * interlocuteurs.length)];
+          const mockSession = await ChatService.createChatSession(user, randomUser, 'human');
+          setSession(mockSession);
+          navigation.replace("Chat", { sessionId: mockSession.id });
         })();
       }
     }
