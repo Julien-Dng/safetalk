@@ -27,6 +27,13 @@ interface EmptyStateProps {
   onChatWithAI: () => void;
   onShowAccount: () => void;
   isSearchingPartner: boolean; // 🆕 Prop pour l'état de recherche
+  presenceInitialized?: boolean;
+  presenceError?: string | null;
+
+  onRunDiagnostic?: () => void;
+  onCreateMockUser?: () => void;
+  onRestartPresence?: () => void;
+  onForceSearching?: () => void;
 }
 
 // Custom Card Component
@@ -41,7 +48,14 @@ export function EmptyState({
   onFindPartner,
   onChatWithAI,
   onShowAccount,
-  isSearchingPartner
+  isSearchingPartner,
+  presenceInitialized,
+  presenceError,
+
+  onRunDiagnostic,
+  onCreateMockUser,
+  onRestartPresence,
+  onForceSearching
 }: EmptyStateProps) {
   // Animation pour le clignotement
   const blinkAnimation = useRef(new Animated.Value(1)).current;
