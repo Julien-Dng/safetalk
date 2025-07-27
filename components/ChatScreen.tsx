@@ -18,33 +18,50 @@ interface ChatScreenProps {
 
 export default function ChatScreen({ onCloseChat }: ChatScreenProps) {
   const { params } = useRoute<any>();
-  const { sessionId } = params;
+  const { sessionId } = params || {};
   const navigation = useNavigation<any>();
 
   const [session, setSession] = useState(null as any);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     let unSub: (() => void) | undefined;
     (async () => {
       try {
-        const s = await ChatService.getSessionById(sessionId);
-        setSession(s);
         if (auth.currentUser) {
-            unSub = AuthService.subscribeToUserProfile(
-            auth.currentUser.uid,
-            setUser
-          );
+          unSub = AuthService.subscribeToUserProfile(auth.currentUser.uid, setUser);
+        }
+
+        if (sessionId) {
+          const s = await ChatService.getSessionById(sessionId);
+          if (s) {
+            setSession(s);
+            setIsSearching(s.isSearching);
+          }
         }
       } finally {
         setLoading(false);
       }
     })();
-     return () => {
+    return () => {
       if (unSub) unSub();
     };
   }, [sessionId]);
+
+  useEffect(() => {
+    if (!sessionId && user && !session && !loading) {
+      (async () => {
+        setLoading(true);
+        const newSession = await ChatService.createChatSession(user, null, 'human', true);
+        setSession(newSession);
+        setIsSearching(true);
+        navigation.setParams({ sessionId: newSession.id });
+        setLoading(false);
+      })();
+    }
+  }, [sessionId, user, session, loading, navigation]);
 
     useEffect(() => {
     if (!loading && session && user) {
@@ -52,7 +69,7 @@ export default function ChatScreen({ onCloseChat }: ChatScreenProps) {
       const isAI = session.participantUsernames.includes("@SafetalkAI");
       const isActive = session.status === "active";
 
-      if (!isAI && (!hasPartner || !isActive)) {
+      if (!isAI && (isSearching || !hasPartner || !isActive)) {
         (async () => {
           setLoading(true);
           try {
@@ -61,6 +78,7 @@ export default function ChatScreen({ onCloseChat }: ChatScreenProps) {
             if (result.success && result.chatId) {
               const newSession = await ChatService.getSessionById(result.chatId);
               setSession(newSession);
+              setIsSearching(false);
               navigation.replace("Chat", { sessionId: newSession!.id });
               return;
             }
@@ -70,11 +88,12 @@ export default function ChatScreen({ onCloseChat }: ChatScreenProps) {
           const randomUser = interlocuteurs[Math.floor(Math.random() * interlocuteurs.length)];
           const mockSession = await ChatService.createChatSession(user, randomUser, 'human');
           setSession(mockSession);
+          setIsSearching(false);
           navigation.replace("Chat", { sessionId: mockSession.id });
         })();
       }
     }
-  }, [loading, session, user]);
+  }, [loading, session, user, isSearching]);
 
   if (loading || !session || !user) {
     return (
@@ -101,6 +120,7 @@ export default function ChatScreen({ onCloseChat }: ChatScreenProps) {
       giftableCredits={user.giftableCredits}
       dailyFreeTimeRemaining={freeTimeRemaining}
       paidTimeAvailable={user.paidTimeAvailable}
+      isSearching={isSearching}
       onBack={() => {}}
       onCloseChat={onCloseChat}
       onTimerEnd={() => {}}

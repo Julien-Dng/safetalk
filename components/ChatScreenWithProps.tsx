@@ -61,6 +61,7 @@ export interface ChatScreenProps {
   onCreditDeducted: () => void;
   onUpdateSession: (session: ServiceChatSession) => void;
   onLowTimeAlert: (freeTimeLeft: number, paidTimeLeft: number) => void;
+  isSearching: boolean;
 }
 
 export default function ChatScreenWithProps({
@@ -88,6 +89,7 @@ export default function ChatScreenWithProps({
   onCreditDeducted,
   onUpdateSession,
   onLowTimeAlert,
+  isSearching,
 }: ChatScreenProps) {
     const partnerId = chatSession.participants.find((id) => id !== uid);
 
@@ -95,7 +97,7 @@ export default function ChatScreenWithProps({
   const interlocutor = partnerId
     ? chatSession.participantProfiles[partnerId]
     : {
-        username: "@SafetalkAI",
+        username: isSearching ? "..." : "@SafetalkAI",
         isAmbassador: false,
         rating: 0,
         isPremium: false,
@@ -180,7 +182,7 @@ export default function ChatScreenWithProps({
       chatMessageUnsubscribe.current = unSubMsgs;
 
       // Premier message système
-      if (messages.length === 0) {
+      if (chatSession.metadata.messageCount === 0 && !isSearching) {
         const welcome = getWelcomeMessage();
         await ChatService.sendMessage(
           chatSession.id,
@@ -345,7 +347,7 @@ export default function ChatScreenWithProps({
           {/* Partner Info */}
           <View style={styles.partnerInfo}>
             <Text style={styles.partnerName}>
-              {interlocutor.username}
+              {isSearching ? '...' : interlocutor.username}
             </Text>
             {interlocutor.isAmbassador && (
               <View style={styles.ambassadorBadge}>
@@ -458,7 +460,7 @@ export default function ChatScreenWithProps({
         {/* Input Area */}
         <View style={styles.inputContainer}>
           {/* Change Partner Button - Only for human chats */}
-          {interlocutor.username !== "@SafetalkAI" && (
+          {!isSearching && interlocutor.username !== "@SafetalkAI" && (
             <TouchableOpacity
               style={styles.changePartnerButton}
               onPress={handleChangePartner}
@@ -482,22 +484,22 @@ export default function ChatScreenWithProps({
               value={inputText}
               onChangeText={setInputText}
               placeholder={
-                isChangingPartner
+                isChangingPartner || isSearching
                   ? "Finding new partner..."
                   : "Type your message..."
               }
               placeholderTextColor="#7c3aed"
               multiline
               maxLength={500}
-              editable={!isChangingPartner && !loading}
+              editable={!isChangingPartner && !loading && !isSearching}
             />
             <TouchableOpacity
               style={[
                 styles.sendButton,
-                (!inputText.trim() || loading || isChangingPartner) && styles.sendButtonDisabled
+                (!inputText.trim() || loading || isChangingPartner || isSearching) && styles.sendButtonDisabled
               ]}
               onPress={handleSendMessage}
-              disabled={!inputText.trim() || loading || isChangingPartner}
+              disabled={!inputText.trim() || loading || isChangingPartner || isSearching}
             >
               <Ionicons 
                 name="send" 
