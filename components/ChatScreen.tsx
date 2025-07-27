@@ -80,6 +80,7 @@ export default function ChatScreen({ onCloseChat }: ChatScreenProps) {
               setSession(newSession);
               setIsSearching(false);
               navigation.replace("Chat", { sessionId: newSession!.id });
+              setLoading(false);
               return;
             }
           } catch (error) {
@@ -90,6 +91,7 @@ export default function ChatScreen({ onCloseChat }: ChatScreenProps) {
           setSession(mockSession);
           setIsSearching(false);
           navigation.replace("Chat", { sessionId: mockSession.id });
+          setLoading(false);
         })();
       }
     }
