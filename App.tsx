@@ -896,27 +896,8 @@ export default function App() {
     setSetupCompleted(profile.hasCompletedSetup);
   };
 
-  const handleFindPartner = async () => {
-    if (!userData) return;
-      try {
-        const { requestId, promise } = await MatchingService.findMatch(userData);
-        const result = await promise;
-        if (result.success && result.chatId) {
-          const session = await ChatService.getSessionById(result.chatId);
-          if (session) {
-            setChatSession(session);
-            navigationRef.current?.navigate("Chat", { sessionId: session.id });
-            return;
-          }
-        }
-      } catch (error) {
-        console.error('Failed to find partner:', error);
-      }
-
-    const randomUser = interlocuteurs[Math.floor(Math.random() * interlocuteurs.length)];
-    const mockSession = await ChatService.createChatSession(userData, randomUser, 'human');
-    setChatSession(mockSession);
-    navigationRef.current?.navigate("Chat", { sessionId: mockSession.id });
+  const handleFindPartner = () => {
+    navigationRef.current?.navigate('Chat');
   };
   
   const handleChatWithAI = async () => {

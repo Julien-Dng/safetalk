@@ -49,6 +49,7 @@ export interface ChatSession {
   status: 'active' | 'ended' | 'abandoned';
   sessionType: 'human' | 'ai';
   isAIChat: boolean;
+  isSearching: boolean;
   metadata: {
     startTime: number;
     endTime?: number;
@@ -83,43 +84,36 @@ export class ChatService {
   static async createChatSession(
     user1: UserProfile,
     user2: UserProfile | null, // null for AI chat
-    sessionType: 'human' | 'ai' = 'human'
+    sessionType: 'human' | 'ai' = 'human',
+    isSearching = false
   ): Promise<ChatSession> {
     try {
-      const isAIChat = sessionType === 'ai' || !user2;
-      
-      let participants: string[];
-      let participantUsernames: string[];
-      let participantProfiles: ChatSession['participantProfiles'];
+      const isAIChat = sessionType === 'ai';
 
-      if (isAIChat) {
-        participants = [user1.uid];
-        participantUsernames = [user1.username, '@SafetalkAI'];
-        participantProfiles = {
-          [user1.uid]: {
-            username: user1.username,
+      let participants: string[] = [user1.uid];
+      let participantUsernames: string[] = [user1.username];
+      let participantProfiles: ChatSession['participantProfiles'] = {
+        [user1.uid]: {
+          username: user1.username,
+          isAmbassador: false,
+          rating: 0,
+          isPremium: user1.isPremium,
+        },
+      };
+
+      if (!isSearching) {
+        if (isAIChat) {
+          participantUsernames.push('@SafetalkAI');
+        } else if (user2) {
+          participants.push(user2.uid);
+          participantUsernames.push(user2.username);
+          participantProfiles[user2.uid] = {
+            username: user2.username,
             isAmbassador: false,
             rating: 0,
-            isPremium: user1.isPremium
-          }
-        };
-      } else {
-        participants = [user1.uid, user2!.uid];
-        participantUsernames = [user1.username, user2!.username];
-        participantProfiles = {
-          [user1.uid]: {
-            username: user1.username,
-            isAmbassador: false,
-            rating: 0,
-            isPremium: user1.isPremium
-          },
-          [user2!.uid]: {
-            username: user2!.username,
-            isAmbassador: false,
-            rating: 0,
-            isPremium: user2!.isPremium
-          }
-        };
+            isPremium: user2.isPremium,
+          };
+        }
       }
 
       const chatData = {
@@ -131,6 +125,7 @@ export class ChatService {
         status: 'active',
         sessionType,
         isAIChat,
+        isSearching,
         metadata: {
           startTime: Date.now(),
           messageCount: 0,
@@ -144,7 +139,9 @@ export class ChatService {
       const chatRef = await addDoc(collection(db, 'chats'), chatData);
 
       // Send welcome message
-      const welcomeMessage = this.getWelcomeMessage(user1.role, isAIChat);
+      const welcomeMessage = isSearching
+        ? 'Finding a partner...'
+        : this.getWelcomeMessage(user1.role, isAIChat);
       await this.sendMessage(chatRef.id, 'system', 'SafeTalk', welcomeMessage, 'system');
 
       return {
@@ -192,7 +189,7 @@ export class ChatService {
               const session = await this.getSessionById(chatId);
         if (session?.isAIChat) {
           this.scheduleAIResponse(chatId, text);
-        } else {
+        } else if (!session?.isSearching) {
           this.scheduleHumanResponse(chatId);
         }
       }
@@ -383,6 +380,17 @@ export class ChatService {
       id: snap.id,
       ...(snap.data() as Omit<ChatSession, "id">),
     };
+  }
+
+  static async updateChatSession(
+    chatId: string,
+    data: Partial<ChatSession>
+  ): Promise<void> {
+    try {
+      await updateDoc(doc(db, 'chats', chatId), data as any);
+    } catch (error) {
+      console.error('Error updating chat session:', error);
+    }
   }
 
   // Schedule AI response (simulated)
