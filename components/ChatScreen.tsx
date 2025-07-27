@@ -9,7 +9,6 @@ import { AuthService, UserProfile } from "../services/authService";
 import { MatchingService } from "../services/matchingService";
 import { interlocuteurs } from "../interlocuteurs";
 
-
 const DAILY_FREE_LIMIT_SEC = 20 * 60;
 
 interface ChatScreenProps {
@@ -18,58 +17,98 @@ interface ChatScreenProps {
 
 export default function ChatScreen({ onCloseChat }: ChatScreenProps) {
   const { params } = useRoute<any>();
-  const { sessionId } = params;
+  const { sessionId, searching } = params || {};
   const navigation = useNavigation<any>();
 
-  const [session, setSession] = useState(null as any);
+  const [session, setSession] = useState<ChatSession | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState<boolean>(!!searching);
 
   useEffect(() => {
     let unSub: (() => void) | undefined;
     (async () => {
       try {
-        const s = await ChatService.getSessionById(sessionId);
-        setSession(s);
+        if (sessionId) {
+          const s = await ChatService.getSessionById(sessionId);
+          setSession(s);
+          if (s && s.participants.length <= 1) {
+            setIsSearching(true);
+          }
+        }
         if (auth.currentUser) {
-            unSub = AuthService.subscribeToUserProfile(
+          unSub = AuthService.subscribeToUserProfile(
             auth.currentUser.uid,
-            setUser
+            setUser,
           );
         }
       } finally {
         setLoading(false);
       }
     })();
-     return () => {
+    return () => {
       if (unSub) unSub();
     };
   }, [sessionId]);
 
-    useEffect(() => {
+  // create placeholder session if searching with no session
+  useEffect(() => {
+    if (!loading && isSearching && !session && user) {
+      (async () => {
+        setLoading(true);
+        try {
+          const placeholder = await ChatService.createChatSession(
+            user,
+            null,
+            "human",
+            true,
+          );
+          setSession(placeholder);
+          navigation.replace("Chat", {
+            sessionId: placeholder.id,
+            searching: true,
+          });
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }
+  }, [loading, isSearching, session, user]);
+
+  useEffect(() => {
     if (!loading && session && user) {
       const hasPartner = session.participants.length > 1;
       const isAI = session.participantUsernames.includes("@SafetalkAI");
       const isActive = session.status === "active";
 
       if (!isAI && (!hasPartner || !isActive)) {
+        setIsSearching(true);
         (async () => {
           setLoading(true);
           try {
             const { promise } = await MatchingService.findMatch(user);
             const result = await promise;
             if (result.success && result.chatId) {
-              const newSession = await ChatService.getSessionById(result.chatId);
+              const newSession = await ChatService.getSessionById(
+                result.chatId,
+              );
               setSession(newSession);
+              setIsSearching(false);
               navigation.replace("Chat", { sessionId: newSession!.id });
               return;
             }
           } catch (error) {
-            console.error('Failed to find partner:', error);
+            console.error("Failed to find partner:", error);
           }
-          const randomUser = interlocuteurs[Math.floor(Math.random() * interlocuteurs.length)];
-          const mockSession = await ChatService.createChatSession(user, randomUser, 'human');
+          const randomUser =
+            interlocuteurs[Math.floor(Math.random() * interlocuteurs.length)];
+          const mockSession = await ChatService.createChatSession(
+            user,
+            randomUser,
+            "human",
+          );
           setSession(mockSession);
+          setIsSearching(false);
           navigation.replace("Chat", { sessionId: mockSession.id });
         })();
       }
@@ -77,17 +116,12 @@ export default function ChatScreen({ onCloseChat }: ChatScreenProps) {
   }, [loading, session, user]);
 
   if (loading || !session || !user) {
-    return (
-      <Text style={{ color: "white", padding: 20 }}>
-        Loading…
-      </Text>
-    );
+    return <Text style={{ color: "white", padding: 20 }}>Loading…</Text>;
   }
 
-   const freeTimeRemaining =
-    user.isPremium
-      ? Infinity
-      : Math.max(0, DAILY_FREE_LIMIT_SEC - user.dailyFreeTimeUsed);
+  const freeTimeRemaining = user.isPremium
+    ? Infinity
+    : Math.max(0, DAILY_FREE_LIMIT_SEC - user.dailyFreeTimeUsed);
 
   return (
     <ChatScreenWithProps
@@ -100,10 +134,11 @@ export default function ChatScreen({ onCloseChat }: ChatScreenProps) {
       giftableCredits={user.giftableCredits}
       dailyFreeTimeRemaining={freeTimeRemaining}
       paidTimeAvailable={user.paidTimeAvailable}
+      isSearching={isSearching}
       onBack={() => {}}
       onCloseChat={onCloseChat}
       onTimerEnd={() => {}}
-      onShowAccount={() => navigation.navigate('Account')}
+      onShowAccount={() => navigation.navigate("Account")}
       onChatEnd={() => {}}
       onPartnerChange={() => {}}
       onUserBlocked={() => {}}

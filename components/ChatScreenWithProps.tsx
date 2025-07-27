@@ -1,9 +1,4 @@
-import React, {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-} from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -17,10 +12,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import {
-  TimerService,
-  TimerState,
-} from "../services/timerService";
+import { TimerService, TimerState } from "../services/timerService";
 import { CreditService } from "../services/creditService";
 import {
   ChatService,
@@ -41,6 +33,7 @@ export interface ChatScreenProps {
   username: string;
   role: string;
   chatSession: ServiceChatSession;
+  isSearching: boolean;
   credits: number;
   isPremium: boolean;
   giftableCredits: number;
@@ -67,6 +60,7 @@ export default function ChatScreenWithProps({
   username,
   role,
   chatSession,
+  isSearching,
   credits,
   isPremium,
   giftableCredits,
@@ -87,28 +81,34 @@ export default function ChatScreenWithProps({
   onUpdateSession,
   onLowTimeAlert,
 }: ChatScreenProps) {
-    const partnerId = chatSession.participants.find((id) => id !== uid);
+  const partnerId = chatSession.participants.find((id) => id !== uid);
 
   // 2) Resolve their profile (or fall back to the AI)
   const interlocutor = partnerId
     ? chatSession.participantProfiles[partnerId]
-    : {
-        username: "@SafetalkAI",
-        isAmbassador: false,
-        rating: 0,
-        isPremium: false,
-      };
+    : isSearching
+      ? {
+          username: "...",
+          isAmbassador: false,
+          rating: 0,
+          isPremium: false,
+        }
+      : {
+          username: "@SafetalkAI",
+          isAmbassador: false,
+          rating: 0,
+          isPremium: false,
+        };
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   const [timerState, setTimerState] = useState<TimerState | null>(null);
   const [creditsActivated, setCreditsActivated] = useState(false);
   const [isChangingPartner, setIsChangingPartner] = useState(false);
   const [loading, setLoading] = useState(false);
-  
 
   const messagesEndRef = useRef<ScrollView>(null);
   const timerService = useRef(TimerService.getInstance());
-  const timerUnsubscribe = useRef<(() => void) | null>(null)
+  const timerUnsubscribe = useRef<(() => void) | null>(null);
   const chatMessageUnsubscribe = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -123,34 +123,23 @@ export default function ChatScreenWithProps({
         {
           uid,
           isPremium,
-          dailyFreeTimeUsed:
-            1200 - dailyFreeTimeRemaining,
+          dailyFreeTimeUsed: 1200 - dailyFreeTimeRemaining,
           paidTimeAvailable,
           dailyResetDate: new Date().toDateString(),
         } as any,
-        chatSession.id
+        chatSession.id,
       );
-      const unSubTimer =
-        timerService.current.subscribe((state) => {
-          setTimerState(state);
-          const total =
-            state.freeTimeLeft +
-            state.paidTimeLeft;
-          if (
-            total <= 180 &&
-            total > 0 &&
-            !isPremium
-          ) {
-            onLowTimeAlert(
-              state.freeTimeLeft,
-              state.paidTimeLeft
-            );
-          }
-          if (total <= 0 && !isPremium) {
-            onTimerEnd();
-          }
-        });
-        timerUnsubscribe.current = unSubTimer
+      const unSubTimer = timerService.current.subscribe((state) => {
+        setTimerState(state);
+        const total = state.freeTimeLeft + state.paidTimeLeft;
+        if (total <= 180 && total > 0 && !isPremium) {
+          onLowTimeAlert(state.freeTimeLeft, state.paidTimeLeft);
+        }
+        if (total <= 0 && !isPremium) {
+          onTimerEnd();
+        }
+      });
+      timerUnsubscribe.current = unSubTimer;
       timerService.current.startTimer();
 
       // Messages
@@ -165,15 +154,13 @@ export default function ChatScreenWithProps({
                 msg.senderId === uid
                   ? "user"
                   : msg.senderId === "system"
-                  ? "system"
-                  : "partner",
+                    ? "system"
+                    : "partner",
               timestamp:
-                msg.timestamp instanceof Date
-                  ? msg.timestamp
-                  : new Date(),
-            }))
+                msg.timestamp instanceof Date ? msg.timestamp : new Date(),
+            })),
           );
-        }
+        },
       );
       chatMessageUnsubscribe.current = unSubMsgs;
 
@@ -185,7 +172,7 @@ export default function ChatScreenWithProps({
           "system",
           "SafeTalk",
           welcome,
-          "system"
+          "system",
         );
       }
     } catch (err) {
@@ -201,11 +188,10 @@ export default function ChatScreenWithProps({
   };
 
   const getWelcomeMessage = () => {
-    if (
-      chatSession.participantUsernames.includes(
-        "@SafetalkAI"
-      )
-    ) {
+    if (isSearching) {
+      return "finding a partner";
+    }
+    if (chatSession.participantUsernames.includes("@SafetalkAI")) {
       return `Hello! I'm your AI companion…`;
     }
     switch (role) {
@@ -227,7 +213,7 @@ export default function ChatScreenWithProps({
         uid,
         username,
         inputText.trim(),
-        "text"
+        "text",
       );
       setInputText("");
     } catch {
@@ -246,10 +232,10 @@ export default function ChatScreenWithProps({
       await ChatService.endChatSession(
         chatSession.id,
         Math.floor((Date.now() - chatSession.metadata.startTime) / 1000),
-        messages.filter(m => m.sender !== 'system').length
+        messages.filter((m) => m.sender !== "system").length,
       );
     } catch (error) {
-      console.error('Error ending chat session:', error);
+      console.error("Error ending chat session:", error);
     }
 
     onCloseChat(free, paid);
@@ -260,9 +246,9 @@ export default function ChatScreenWithProps({
     setIsChangingPartner(true);
     // End current chat session
     ChatService.endChatSession(
-       chatSession.id,
-       Math.floor((Date.now() - chatSession.metadata.startTime) / 1000),
-      messages.filter(m => m.sender !== 'system').length
+      chatSession.id,
+      Math.floor((Date.now() - chatSession.metadata.startTime) / 1000),
+      messages.filter((m) => m.sender !== "system").length,
     );
     onPartnerChange();
   };
@@ -275,7 +261,7 @@ export default function ChatScreenWithProps({
         const success = await CreditService.deductCredits(
           uid,
           credits,
-          `Used ${credits} credits for chat time`
+          `Used ${credits} credits for chat time`,
         );
 
         if (success) {
@@ -284,11 +270,11 @@ export default function ChatScreenWithProps({
           setCreditsActivated(true);
           onUseCredits(credits);
         } else {
-          Alert.alert('Error', 'Insufficient credits');
+          Alert.alert("Error", "Insufficient credits");
         }
       } catch (error) {
-        console.error('Error using credits:', error);
-        Alert.alert('Error', 'Failed to use credits');
+        console.error("Error using credits:", error);
+        Alert.alert("Error", "Failed to use credits");
       }
     }
   };
@@ -296,22 +282,32 @@ export default function ChatScreenWithProps({
   // Format time display
   const formatTime = (seconds: number): string => {
     if (seconds === Infinity || isPremium) return "∞";
-    
+
     if (seconds >= 3600) {
       const hours = Math.floor(seconds / 3600);
       const mins = Math.floor((seconds % 3600) / 60);
-      return `${hours}h${mins.toString().padStart(2, '0')}`;
+      return `${hours}h${mins.toString().padStart(2, "0")}`;
     }
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   // Calculate timer values
-  const totalTimeLeft = timerState ? 
-    (creditsActivated ? timerState.paidTimeLeft : timerState.freeTimeLeft + timerState.paidTimeLeft) : 0;
-  const progressPercentage = timerState ? timerService.current.getProgressPercentage() : 0;
-  const timerColor = totalTimeLeft <= 60 ? '#ef4444' : totalTimeLeft <= 180 ? '#f59e0b' : '#7c3aed';
+  const totalTimeLeft = timerState
+    ? creditsActivated
+      ? timerState.paidTimeLeft
+      : timerState.freeTimeLeft + timerState.paidTimeLeft
+    : 0;
+  const progressPercentage = timerState
+    ? timerService.current.getProgressPercentage()
+    : 0;
+  const timerColor =
+    totalTimeLeft <= 60
+      ? "#ef4444"
+      : totalTimeLeft <= 180
+        ? "#f59e0b"
+        : "#7c3aed";
   const shouldPulse = totalTimeLeft <= 60;
 
   // Scroll to bottom when messages update
@@ -323,12 +319,12 @@ export default function ChatScreenWithProps({
 
   return (
     <LinearGradient
-      colors={['#0f0f23', '#1a1a2e', '#16213e']}
+      colors={["#0f0f23", "#1a1a2e", "#16213e"]}
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="light-content" backgroundColor="#0f0f23" />
-        
+
         {/* Header */}
         <View style={styles.header}>
           {/* Close Chat Button */}
@@ -339,22 +335,22 @@ export default function ChatScreenWithProps({
           >
             <Ionicons name="close" size={20} color="#c4b5fd" />
           </TouchableOpacity>
-          
+
           {/* Partner Info */}
           <View style={styles.partnerInfo}>
-            <Text style={styles.partnerName}>
-              {interlocutor.username}
-            </Text>
-            {interlocutor.isAmbassador && (
+            <Text style={styles.partnerName}>{interlocutor.username}</Text>
+            {!isSearching && interlocutor.isAmbassador && (
               <View style={styles.ambassadorBadge}>
                 <Ionicons name="shield-checkmark" size={12} color="#ffffff" />
                 <Text style={styles.ambassadorText}>
-                  {interlocutor.username === "@SafetalkAI" ? "AI" : "Ambassador"}
+                  {interlocutor.username === "@SafetalkAI"
+                    ? "AI"
+                    : "Ambassador"}
                 </Text>
               </View>
             )}
           </View>
-          
+
           {/* Menu Button */}
           <TouchableOpacity
             style={styles.menuButton}
@@ -370,22 +366,20 @@ export default function ChatScreenWithProps({
           <View style={styles.timerSection}>
             <View style={styles.timerHeader}>
               <Text style={styles.timerLabel}>Time Remaining</Text>
-              <Text style={styles.timerValue}>
-                {formatTime(totalTimeLeft)}
-              </Text>
+              <Text style={styles.timerValue}>{formatTime(totalTimeLeft)}</Text>
             </View>
-            
+
             {/* Progress Bar */}
             <View style={styles.progressBarContainer}>
               <View style={styles.progressBarBackground}>
-                <View 
+                <View
                   style={[
                     styles.progressBarFill,
-                    { 
+                    {
                       width: `${progressPercentage}%`,
                       backgroundColor: timerColor,
-                      opacity: shouldPulse ? 0.8 : 1
-                    }
+                      opacity: shouldPulse ? 0.8 : 1,
+                    },
                   ]}
                 />
               </View>
@@ -418,11 +412,11 @@ export default function ChatScreenWithProps({
                 key={message.id}
                 style={[
                   styles.messageContainer,
-                  message.sender === "user" 
+                  message.sender === "user"
                     ? styles.messageContainerUser
                     : message.sender === "system"
-                    ? styles.messageContainerSystem
-                    : styles.messageContainerPartner
+                      ? styles.messageContainerSystem
+                      : styles.messageContainerPartner,
                 ]}
               >
                 <View
@@ -431,8 +425,8 @@ export default function ChatScreenWithProps({
                     message.sender === "user"
                       ? styles.messageBubbleUser
                       : message.sender === "system"
-                      ? styles.messageBubbleSystem
-                      : styles.messageBubblePartner
+                        ? styles.messageBubbleSystem
+                        : styles.messageBubblePartner,
                   ]}
                 >
                   <Text
@@ -441,8 +435,8 @@ export default function ChatScreenWithProps({
                       message.sender === "user"
                         ? styles.messageTextUser
                         : message.sender === "system"
-                        ? styles.messageTextSystem
-                        : styles.messageTextPartner
+                          ? styles.messageTextSystem
+                          : styles.messageTextPartner,
                     ]}
                   >
                     {message.text}
@@ -456,23 +450,19 @@ export default function ChatScreenWithProps({
         {/* Input Area */}
         <View style={styles.inputContainer}>
           {/* Change Partner Button - Only for human chats */}
-          {interlocutor.username !== "@SafetalkAI" && (
+          {!isSearching && interlocutor.username !== "@SafetalkAI" && (
             <TouchableOpacity
               style={styles.changePartnerButton}
               onPress={handleChangePartner}
               disabled={isChangingPartner}
             >
-              <Ionicons 
-                name="refresh-outline" 
-                size={16} 
-                color="#c4b5fd" 
-              />
+              <Ionicons name="refresh-outline" size={16} color="#c4b5fd" />
               <Text style={styles.changePartnerText}>
                 {isChangingPartner ? "Finding Partner..." : "Change Partner"}
               </Text>
             </TouchableOpacity>
           )}
-          
+
           {/* Message Input */}
           <View style={styles.messageInput}>
             <TextInput
@@ -482,26 +472,30 @@ export default function ChatScreenWithProps({
               placeholder={
                 isChangingPartner
                   ? "Finding new partner..."
-                  : "Type your message..."
+                  : isSearching
+                    ? "Finding partner..."
+                    : "Type your message..."
               }
               placeholderTextColor="#7c3aed"
               multiline
               maxLength={500}
-              editable={!isChangingPartner && !loading}
+              editable={!isChangingPartner && !loading && !isSearching}
             />
             <TouchableOpacity
               style={[
                 styles.sendButton,
-                (!inputText.trim() || loading || isChangingPartner) && styles.sendButtonDisabled
+                (!inputText.trim() ||
+                  loading ||
+                  isChangingPartner ||
+                  isSearching) &&
+                  styles.sendButtonDisabled,
               ]}
               onPress={handleSendMessage}
-              disabled={!inputText.trim() || loading || isChangingPartner}
+              disabled={
+                !inputText.trim() || loading || isChangingPartner || isSearching
+              }
             >
-              <Ionicons 
-                name="send" 
-                size={20} 
-                color="#ffffff" 
-              />
+              <Ionicons name="send" size={20} color="#ffffff" />
             </TouchableOpacity>
           </View>
         </View>
@@ -518,41 +512,41 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: 'rgba(124, 58, 237, 0.2)',
+    backgroundColor: "rgba(124, 58, 237, 0.2)",
     borderBottomWidth: 1,
-    borderBottomColor: '#4c1d95',
+    borderBottomColor: "#4c1d95",
   },
   closeButton: {
     padding: 8,
   },
   partnerInfo: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
     gap: 4,
   },
   partnerName: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   ambassadorBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
-    backgroundColor: 'rgba(124, 58, 237, 0.8)',
+    backgroundColor: "rgba(124, 58, 237, 0.8)",
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 8,
   },
   ambassadorText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 10,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   menuButton: {
     padding: 8,
@@ -560,52 +554,52 @@ const styles = StyleSheet.create({
   timerSection: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: 'rgba(124, 58, 237, 0.1)',
+    backgroundColor: "rgba(124, 58, 237, 0.1)",
     borderBottomWidth: 1,
-    borderBottomColor: '#4c1d95',
+    borderBottomColor: "#4c1d95",
     gap: 12,
   },
   timerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   timerLabel: {
-    color: '#a78bfa',
+    color: "#a78bfa",
     fontSize: 14,
   },
   timerValue: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   progressBarContainer: {
     height: 8,
   },
   progressBarBackground: {
     height: 8,
-    backgroundColor: 'rgba(124, 58, 237, 0.3)',
+    backgroundColor: "rgba(124, 58, 237, 0.3)",
     borderRadius: 4,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   progressBarFill: {
-    height: '100%',
+    height: "100%",
     borderRadius: 4,
   },
   useCreditsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
     padding: 12,
-    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+    backgroundColor: "rgba(34, 197, 94, 0.1)",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(34, 197, 94, 0.3)',
+    borderColor: "rgba(34, 197, 94, 0.3)",
   },
   useCreditsText: {
-    color: '#22c55e',
+    color: "#22c55e",
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   messagesContainer: {
     flex: 1,
@@ -622,83 +616,83 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   messageContainerUser: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   messageContainerSystem: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   messageContainerPartner: {
-    alignItems: 'flex-start',
+    alignItems: "flex-start",
   },
   messageBubble: {
-    maxWidth: '80%',
+    maxWidth: "80%",
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 16,
   },
   messageBubbleUser: {
-    backgroundColor: '#7c3aed',
+    backgroundColor: "#7c3aed",
   },
   messageBubbleSystem: {
-    backgroundColor: 'rgba(124, 58, 237, 0.3)',
-    maxWidth: '90%',
+    backgroundColor: "rgba(124, 58, 237, 0.3)",
+    maxWidth: "90%",
   },
   messageBubblePartner: {
-    backgroundColor: 'rgba(124, 58, 237, 0.5)',
+    backgroundColor: "rgba(124, 58, 237, 0.5)",
   },
   messageText: {
     fontSize: 14,
     lineHeight: 20,
   },
   messageTextUser: {
-    color: '#ffffff',
+    color: "#ffffff",
   },
   messageTextSystem: {
-    color: '#c4b5fd',
-    textAlign: 'center',
-    fontStyle: 'italic',
+    color: "#c4b5fd",
+    textAlign: "center",
+    fontStyle: "italic",
   },
   messageTextPartner: {
-    color: '#ffffff',
+    color: "#ffffff",
   },
   inputContainer: {
     paddingHorizontal: 16,
     paddingBottom: 16,
     paddingTop: 12,
-    backgroundColor: 'rgba(124, 58, 237, 0.1)',
+    backgroundColor: "rgba(124, 58, 237, 0.1)",
     borderTopWidth: 1,
-    borderTopColor: '#4c1d95',
+    borderTopColor: "#4c1d95",
     gap: 12,
   },
   changePartnerButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: '#4c1d95',
+    borderColor: "#4c1d95",
     borderRadius: 12,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   changePartnerText: {
-    color: '#c4b5fd',
+    color: "#c4b5fd",
     fontSize: 14,
   },
   messageInput: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
+    flexDirection: "row",
+    alignItems: "flex-end",
     gap: 12,
   },
   textInput: {
     flex: 1,
-    backgroundColor: 'rgba(124, 58, 237, 0.3)',
+    backgroundColor: "rgba(124, 58, 237, 0.3)",
     borderWidth: 1,
-    borderColor: '#4c1d95',
+    borderColor: "#4c1d95",
     borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 16,
     maxHeight: 100,
   },
@@ -706,9 +700,9 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#7c3aed',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#7c3aed",
+    alignItems: "center",
+    justifyContent: "center",
   },
   sendButtonDisabled: {
     opacity: 0.5,

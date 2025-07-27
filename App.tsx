@@ -21,15 +21,15 @@
 // import { LowTimeAlert } from "./components/LowTimeAlert";
 // import { InterstitialAd } from "./components/InterstitialAd";
 
-// type Screen = 
-//   | "welcome" 
-//   | "signin" 
-//   | "setup" 
-//   | "chat" 
-//   | "account" 
-//   | "referral" 
+// type Screen =
+//   | "welcome"
+//   | "signin"
+//   | "setup"
+//   | "chat"
+//   | "account"
+//   | "referral"
 //   | "rewards"
-//   | "premium" 
+//   | "premium"
 //   | "empty";
 
 // interface UserData {
@@ -133,12 +133,12 @@
 //     if (userData.isPremium) return Infinity;
 //     checkDailyReset();
 //     const dailyLimit = 20 * 60; // 20 minutes in seconds
-    
+
 //     // Use preserved free time if available, otherwise calculate from daily usage
 //     if (userData.preservedFreeTime !== undefined) {
 //       return userData.preservedFreeTime;
 //     }
-    
+
 //     return Math.max(0, dailyLimit - userData.dailyFreeTimeUsed);
 //   };
 
@@ -148,7 +148,7 @@
 //     if (userData.preservedPaidTime !== undefined) {
 //       return userData.preservedPaidTime;
 //     }
-    
+
 //     return userData.paidTimeAvailable;
 //   };
 
@@ -168,9 +168,9 @@
 //     const usernames = ["@Eclipse", "@Moonlight", "@Stargazer", "@Phoenix", "@Mystic", "@Aurora", "@Cosmic", "@Zen"];
 //     const ratings = [4.2, 4.4, 4.6, 4.8, 4.9, 4.3, 4.7, 4.5];
 //     const ambassadorChance = Math.random() > 0.7; // 30% chance of being an ambassador
-    
+
 //     const randomIndex = Math.floor(Math.random() * usernames.length);
-    
+
 //     return {
 //       username: usernames[randomIndex],
 //       rating: ratings[randomIndex],
@@ -182,7 +182,7 @@
 //   const startNewChatSession = (preserveFreeTime?: number, preservePaidTime?: number) => {
 //     const freeTime = preserveFreeTime !== undefined ? preserveFreeTime : getRemainingFreeTime();
 //     const paidTime = preservePaidTime !== undefined ? preservePaidTime : getAvailablePaidTime();
-    
+
 //     const newSession: ChatSession = {
 //       id: Date.now().toString(),
 //       startTime: Date.now(),
@@ -195,7 +195,7 @@
 //       isActive: true
 //     };
 //     setChatSession(newSession);
-    
+
 //     // Clear preserved time since it's now being used in new session
 //     setUserData(prev => ({
 //       ...prev,
@@ -211,12 +211,12 @@
 //   };
 
 //   const handleSignIn = (username: string, userProfile: any) => {
-//     setUserData(prev => ({ 
-//       ...prev, 
+//     setUserData(prev => ({
+//       ...prev,
 //       ...userProfile,
-//       username 
+//       username
 //     }));
-    
+
 //     if (userProfile.hasCompletedSetup) {
 //       navigateToScreen("empty");
 //     } else {
@@ -231,7 +231,7 @@
 //         const { AuthService } = await import('./services/authService');
 //         await AuthService.completeSetup(userData.uid, role as 'talk' | 'listen' | 'both');
 //       }
-      
+
 //       setUserData(prev => ({ ...prev, role, hasCompletedSetup: true }));
 //       navigateToScreen("empty");
 //     } catch (error) {
@@ -267,7 +267,7 @@
 
 //     // Check if session qualifies for rating (5+ minutes OR 10+ messages)
 //     const qualifiesForRating = sessionData.duration >= 300 || sessionData.messageCount >= 10;
-    
+
 //     if (qualifiesForRating) {
 //       setCurrentSessionData(sessionData);
 //       setShowRatingPopup(true);
@@ -282,14 +282,14 @@
 //       preservedFreeTime: freeTimeLeft,
 //       preservedPaidTime: paidTimeLeft
 //     }));
-    
+
 //     // Mark session as inactive and navigate to empty state
 //     if (chatSession) {
 //       setChatSession(prev => prev ? { ...prev, isActive: false } : null);
 //     }
-    
+
 //     navigateToScreen("empty");
-    
+
 //     console.log("Chat closed, time preserved:", { freeTimeLeft, paidTimeLeft });
 //   }, [chatSession]);
 
@@ -297,11 +297,11 @@
 //   const handlePartnerChange = () => {
 //     if (chatSession) {
 //       const duration = Math.floor((Date.now() - chatSession.startTime) / 1000);
-      
+
 //       if (!userData.isPremium) {
 //         const freeTimeUsed = Math.min(duration, chatSession.freeTimeLeft || 0);
 //         const paidTimeUsed = Math.max(0, duration - freeTimeUsed);
-        
+
 //         setUserData(prev => ({
 //           ...prev,
 //           dailyFreeTimeUsed: prev.dailyFreeTimeUsed + freeTimeUsed,
@@ -314,17 +314,17 @@
 //           partnerChangeCount: prev.partnerChangeCount + 1
 //         }));
 //       }
-      
+
 //       // Check for interstitial ad (every 5 partner changes for freemium users)
 //       const newChangeCount = userData.partnerChangeCount + 1;
 //       if (!userData.isPremium && newChangeCount % 5 === 0) {
 //         setShowInterstitialAd(true);
 //         return; // Don't change partner immediately, wait for ad completion
 //       }
-      
+
 //       // Mark current session as inactive
 //       setChatSession(prev => prev ? { ...prev, isActive: false } : null);
-      
+
 //       // Go to empty state for manual partner search
 //       navigateToScreen("empty");
 //     }
@@ -345,12 +345,12 @@
 //   }, [chatSession]);
 
 //   const handleSubmitRating = (rating: number, comment: string) => {
-//     console.log("Rating submitted:", { 
-//       rating, 
-//       comment, 
-//       interlocutor: currentSessionData?.interlocutor?.username 
+//     console.log("Rating submitted:", {
+//       rating,
+//       comment,
+//       interlocutor: currentSessionData?.interlocutor?.username
 //     });
-    
+
 //     setShowRatingPopup(false);
 //     setCurrentSessionData(null);
 //   };
@@ -358,22 +358,22 @@
 //   const handleExtendTime = (option: string) => {
 //     const costs = { "30min": 5, "1hour": 10, "24hour": 20 };
 //     const cost = costs[option as keyof typeof costs];
-    
+
 //     if (userData.credits >= cost) {
 //       setUserData(prev => ({ ...prev, credits: prev.credits - cost }));
 //       setShowTimerPopup(false);
-      
+
 //       // Add time to paid time available
 //       const extensionTime = option === "30min" ? 30 * 60 : option === "1hour" ? 60 * 60 : 24 * 60 * 60;
 //       setUserData(prev => ({
 //         ...prev,
 //         paidTimeAvailable: prev.paidTimeAvailable + extensionTime
 //       }));
-      
+
 //       // Update current session if active and reactivate it
 //       if (chatSession) {
-//         const updatedSession = { 
-//           ...chatSession, 
+//         const updatedSession = {
+//           ...chatSession,
 //           paidTimeLeft: (chatSession.paidTimeLeft || 0) + extensionTime,
 //           isActive: true
 //         };
@@ -400,23 +400,23 @@
 //   const handleBuyTime = useCallback((option: string, creditsRequired: number, minutes: number) => {
 //     if (userData.credits >= creditsRequired) {
 //       setUserData(prev => ({ ...prev, credits: prev.credits - creditsRequired }));
-      
+
 //       // Add time to paid time available
 //       const extensionTime = minutes * 60; // Convert minutes to seconds
 //       setUserData(prev => ({
 //         ...prev,
 //         paidTimeAvailable: prev.paidTimeAvailable + extensionTime
 //       }));
-      
+
 //       // Update current session if active
 //       if (chatSession) {
-//         const updatedSession = { 
-//           ...chatSession, 
-//           paidTimeLeft: (chatSession.paidTimeLeft || 0) + extensionTime 
+//         const updatedSession = {
+//           ...chatSession,
+//           paidTimeLeft: (chatSession.paidTimeLeft || 0) + extensionTime
 //         };
 //         setChatSession(updatedSession);
 //       }
-      
+
 //       setShowLowTimeAlert(false);
 //       console.log("Time purchased:", { option, creditsRequired, minutes });
 //     }
@@ -428,26 +428,26 @@
 //         ...prev,
 //         credits: prev.credits - creditsToUse
 //       }));
-      
-//       console.log("Credits consumed immediately:", { 
-//         creditsUsed: creditsToUse, 
-//         remainingCredits: userData.credits - creditsToUse 
+
+//       console.log("Credits consumed immediately:", {
+//         creditsUsed: creditsToUse,
+//         remainingCredits: userData.credits - creditsToUse
 //       });
 //     }
 //   }, [userData.credits]);
 
 //   const handleSendCredits = useCallback((amount: number) => {
-//     setUserData(prev => ({ 
-//       ...prev, 
-//       giftableCredits: prev.giftableCredits - amount 
+//     setUserData(prev => ({
+//       ...prev,
+//       giftableCredits: prev.giftableCredits - amount
 //     }));
 //     console.log("Credits sent:", amount);
 //   }, []);
 
 //   const handleCreditDeducted = useCallback(() => {
-//     setUserData(prev => ({ 
-//       ...prev, 
-//       credits: Math.max(0, prev.credits - 1) 
+//     setUserData(prev => ({
+//       ...prev,
+//       credits: Math.max(0, prev.credits - 1)
 //     }));
 //   }, []);
 
@@ -456,14 +456,14 @@
 //       if (!prevSession || prevSession.id !== session.id) {
 //         return { ...session, isActive: true };
 //       }
-      
-//       const hasChanged = 
+
+//       const hasChanged =
 //         prevSession.freeTimeLeft !== session.freeTimeLeft ||
 //         prevSession.paidTimeLeft !== session.paidTimeLeft ||
 //         prevSession.hasReceivedGift !== session.hasReceivedGift ||
 //         prevSession.saveConversation !== session.saveConversation ||
 //         (prevSession.messages?.length || 0) !== (session.messages?.length || 0);
-      
+
 //       return hasChanged ? { ...session, isActive: prevSession.isActive } : prevSession;
 //     });
 //   }, []);
@@ -485,13 +485,13 @@
 //   const handleConvertCredits = () => {
 //     const rewardsEarned = Math.floor(userData.giftableCredits / 15);
 //     const creditsUsed = rewardsEarned * 15;
-    
-//     setUserData(prev => ({ 
-//       ...prev, 
+
+//     setUserData(prev => ({
+//       ...prev,
 //       giftableCredits: prev.giftableCredits - creditsUsed,
 //       totalRewards: prev.totalRewards + rewardsEarned
 //     }));
-    
+
 //     console.log("Credits converted:", { rewardsEarned, creditsUsed });
 //   };
 
@@ -526,14 +526,14 @@
 //     try {
 //       setIsSearchingForPartner(true);
 //       setCurrentScreen("empty");
-      
+
 //       const { MatchingService } = await import('./services/matchingService');
 //       const { requestId, promise } = await MatchingService.findMatch(userData as any);
-      
+
 //       const result = await promise;
-      
+
 //       setIsSearchingForPartner(false);
-      
+
 //       if (result.success && result.chatId && result.partner) {
 //         // Create chat session object
 //         const newSession: ChatSession = {
@@ -551,7 +551,7 @@
 //           saveConversation: false,
 //           isActive: true
 //         };
-        
+
 //         setChatSession(newSession);
 //         navigateToScreen("chat");
 //       } else {
@@ -576,10 +576,10 @@
 //       rating: 5.0,
 //       isAmbassador: true
 //     };
-    
+
 //     const freeTime = getRemainingFreeTime();
 //     const paidTime = getAvailablePaidTime();
-    
+
 //     const aiSession: ChatSession = {
 //       id: "ai-" + Date.now().toString(),
 //       startTime: Date.now(),
@@ -591,15 +591,15 @@
 //       saveConversation: false,
 //       isActive: true
 //     };
-    
+
 //     setChatSession(aiSession);
-    
+
 //     setUserData(prev => ({
 //       ...prev,
 //       preservedFreeTime: undefined,
 //       preservedPaidTime: undefined
 //     }));
-    
+
 //     navigateToScreen("chat");
 //   };
 
@@ -615,7 +615,7 @@
 //     <SafeAreaProvider>
 //       <StatusBar barStyle="light-content" backgroundColor="#0f0f23" />
 //       <NavigationContainer>
-//         <Stack.Navigator 
+//         <Stack.Navigator
 //           screenOptions={{
 //             headerShown: false,
 //             cardStyle: { backgroundColor: '#0f0f23' }
@@ -625,11 +625,11 @@
 //           <Stack.Screen name="Welcome">
 //             {() => <WelcomeScreen onContinue={() => navigateToScreen("signin")} />}
 //           </Stack.Screen>
-          
+
 //           <Stack.Screen name="SignIn">
 //             {() => <SignInScreen onSignIn={handleSignIn} />}
 //           </Stack.Screen>
-          
+
 //           <Stack.Screen name="Setup">
 //             {() => (
 //               <SetupScreen
@@ -638,7 +638,7 @@
 //               />
 //             )}
 //           </Stack.Screen>
-          
+
 //           <Stack.Screen name="Chat">
 //             {() => chatSession ? (
 //               <ChatScreen
@@ -668,7 +668,7 @@
 //               />
 //             ) : null}
 //           </Stack.Screen>
-          
+
 //           <Stack.Screen name="Account">
 //             {() => (
 //               <AccountScreen
@@ -685,7 +685,7 @@
 //               />
 //             )}
 //           </Stack.Screen>
-          
+
 //           <Stack.Screen name="Referral">
 //             {() => (
 //               <ReferralScreen
@@ -696,7 +696,7 @@
 //               />
 //             )}
 //           </Stack.Screen>
-          
+
 //           <Stack.Screen name="Rewards">
 //             {() => (
 //               <MyRewardsScreen
@@ -707,7 +707,7 @@
 //               />
 //             )}
 //           </Stack.Screen>
-          
+
 //           <Stack.Screen name="Premium">
 //             {() => (
 //               <PremiumScreen
@@ -717,7 +717,7 @@
 //               />
 //             )}
 //           </Stack.Screen>
-          
+
 //           <Stack.Screen name="Empty">
 //             {() => (
 //               <EmptyState
@@ -779,17 +779,15 @@
 //   },
 // });
 
-
-
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { StyleSheet, StatusBar } from "react-native";
-import { NavigationContainer, DarkTheme} from "@react-navigation/native";
+import { NavigationContainer, DarkTheme } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { onAuthStateChanged } from "firebase/auth";
 
-import type { ChatSession } from './services/chatService';
-import  { ChatService } from './services/chatService';
+import type { ChatSession } from "./services/chatService";
+import { ChatService } from "./services/chatService";
 
 // Import screens
 import { WelcomeScreen } from "./components/WelcomeScreen";
@@ -813,8 +811,7 @@ import { interlocuteurs } from "./interlocuteurs";
 
 // Firebase
 import { auth, db } from "./config/firebase";
-import { doc, updateDoc } from 'firebase/firestore';
-
+import { doc, updateDoc } from "firebase/firestore";
 
 const Stack = createStackNavigator();
 
@@ -822,11 +819,11 @@ const MyTheme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,
-    background: '#0f0f23',
+    background: "#0f0f23",
   },
 };
 
-const DAILY_FREE_LIMIT_SEC = 20 * 60
+const DAILY_FREE_LIMIT_SEC = 20 * 60;
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -836,60 +833,64 @@ export default function App() {
   const navigationRef = React.useRef<any>(null);
   const profileUnsubscribe = useRef<(() => void) | null>(null);
 
-  const freeTimeRemaining =
-  userData?.isPremium
+  const freeTimeRemaining = userData?.isPremium
     ? Infinity
     : Math.max(0, DAILY_FREE_LIMIT_SEC - (userData?.dailyFreeTimeUsed ?? 0));
 
-  function getPartnerUsername(session: ChatSession | null, currentUserId: string | undefined): string | undefined {
+  function getPartnerUsername(
+    session: ChatSession | null,
+    currentUserId: string | undefined,
+  ): string | undefined {
     if (!session || !currentUserId) return undefined;
-    const partnerId = session.participants.find(id => id !== currentUserId);
-    return partnerId ? session.participantProfiles[partnerId]?.username : undefined;
+    const partnerId = session.participants.find((id) => id !== currentUserId);
+    return partnerId
+      ? session.participantProfiles[partnerId]?.username
+      : undefined;
   }
 
- useEffect(() => {
-  const unsubscribeAuth = onAuthStateChanged(auth, async user => {
-    if (user) {
-      const profile = await AuthService.getUserProfile(user.uid);
-      setUserData(profile);
-      setIsAuthenticated(true);
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const profile = await AuthService.getUserProfile(user.uid);
+        setUserData(profile);
+        setIsAuthenticated(true);
 
-      profileUnsubscribe.current?.();
-      profileUnsubscribe.current = AuthService.subscribeToUserProfile(
-        user.uid,
-        updated => {
-          if (updated) {
-            setUserData(updated);
-          }
-        }
-      );
+        profileUnsubscribe.current?.();
+        profileUnsubscribe.current = AuthService.subscribeToUserProfile(
+          user.uid,
+          (updated) => {
+            if (updated) {
+              setUserData(updated);
+            }
+          },
+        );
 
-      await updateDoc(doc(db, "users", user.uid), {
-        isOnline: true,
-        lastSeen: new Date().toISOString()
-      });
+        await updateDoc(doc(db, "users", user.uid), {
+          isOnline: true,
+          lastSeen: new Date().toISOString(),
+        });
 
-      const sessions = await ChatService.getUserActiveSessions(user.uid);
-      setChatSession(sessions.length > 0 ? sessions[0] : null);
-      setSetupCompleted(profile.hasCompletedSetup);
-    } else {
+        const sessions = await ChatService.getUserActiveSessions(user.uid);
+        setChatSession(sessions.length > 0 ? sessions[0] : null);
+        setSetupCompleted(profile.hasCompletedSetup);
+      } else {
+        profileUnsubscribe.current?.();
+        profileUnsubscribe.current = null;
+        setUserData(null);
+        setIsAuthenticated(false);
+        setSetupCompleted(false);
+        setChatSession(null);
+      }
+    });
+
+    return () => {
+      unsubscribeAuth();
       profileUnsubscribe.current?.();
       profileUnsubscribe.current = null;
-      setUserData(null);
-      setIsAuthenticated(false);
-      setSetupCompleted(false);
-      setChatSession(null);
-    }
-  });
+    };
+  }, []);
 
-  return () => {
-    unsubscribeAuth();
-    profileUnsubscribe.current?.();
-    profileUnsubscribe.current = null;
-  };
-}, []);
-
-  const handleSignIn = async (_username: string,profile: any) => {
+  const handleSignIn = async (_username: string, profile: any) => {
     setUserData(profile);
     setIsAuthenticated(true);
 
@@ -900,77 +901,61 @@ export default function App() {
 
   const handleFindPartner = async () => {
     if (!userData) return;
-      try {
-        const { requestId, promise } = await MatchingService.findMatch(userData);
-        const result = await promise;
-        if (result.success && result.chatId) {
-          const session = await ChatService.getSessionById(result.chatId);
-          if (session) {
-            setChatSession(session);
-            navigationRef.current?.navigate("Chat", { sessionId: session.id });
-            return;
-          }
-        }
-      } catch (error) {
-        console.error('Failed to find partner:', error);
-      }
-
-    const randomUser = interlocuteurs[Math.floor(Math.random() * interlocuteurs.length)];
-    const mockSession = await ChatService.createChatSession(userData, randomUser, 'human');
-    setChatSession(mockSession);
-    navigationRef.current?.navigate("Chat", { sessionId: mockSession.id });
+    navigationRef.current?.navigate("Chat", { searching: true });
   };
-  
+
   const handleChatWithAI = async () => {
-  if (!userData) return;
-  try {
-    const aiSession = await ChatService.createChatSession(
-      userData,
-      null,
-      'ai'
-    );
-    setChatSession(aiSession);
-    navigationRef.current?.navigate('Chat', {
-      sessionId: aiSession.id,
-    });
-  } catch (error) {
-    console.error('Failed to start AI chat:', error);
-  }
-};
-
-  const handleCloseChat = (
-    _freeTimeLeft: number,
-    _paidTimeLeft: number
-  ) => {
-    setChatSession(null);
-    navigationRef.current?.navigate('Setup');
+    if (!userData) return;
+    try {
+      const aiSession = await ChatService.createChatSession(
+        userData,
+        null,
+        "ai",
+      );
+      setChatSession(aiSession);
+      navigationRef.current?.navigate("Chat", {
+        sessionId: aiSession.id,
+      });
+    } catch (error) {
+      console.error("Failed to start AI chat:", error);
+    }
   };
-  
-  const handleResumeChat = () => {
-  if (chatSession) {
-    navigationRef.current?.navigate("Chat", { sessionId: chatSession.id });
-  }
-};
-  
-const handleLogout = async () => {
-  await AuthService.signOut();
-  profileUnsubscribe.current?.();
-  profileUnsubscribe.current = null;
-  setIsAuthenticated(false);
-  setUserData(null);
-  setSetupCompleted(false);
-};
 
-const handleUpdateUsername = async (newUsername: string) => {
-  if (!userData?.uid) return;
-  try {
-    await AuthService.updateUserProfile(userData.uid, { username: newUsername });
-    setUserData({ ...userData, username: newUsername });
-    console.log("✅ Nom d'utilisateur mis à jour :", newUsername);
-  } catch (error) {
-    console.error("❌ Erreur lors de la mise à jour du nom d'utilisateur :", error);
-  }
-};
+  const handleCloseChat = (_freeTimeLeft: number, _paidTimeLeft: number) => {
+    setChatSession(null);
+    navigationRef.current?.navigate("Setup");
+  };
+
+  const handleResumeChat = () => {
+    if (chatSession) {
+      navigationRef.current?.navigate("Chat", { sessionId: chatSession.id });
+    }
+  };
+
+  const handleLogout = async () => {
+    await AuthService.signOut();
+    profileUnsubscribe.current?.();
+    profileUnsubscribe.current = null;
+    setIsAuthenticated(false);
+    setUserData(null);
+    setSetupCompleted(false);
+  };
+
+  const handleUpdateUsername = async (newUsername: string) => {
+    if (!userData?.uid) return;
+    try {
+      await AuthService.updateUserProfile(userData.uid, {
+        username: newUsername,
+      });
+      setUserData({ ...userData, username: newUsername });
+      console.log("✅ Nom d'utilisateur mis à jour :", newUsername);
+    } catch (error) {
+      console.error(
+        "❌ Erreur lors de la mise à jour du nom d'utilisateur :",
+        error,
+      );
+    }
+  };
 
   const handleConvertCredits = () => {
     const rewardsEarned = Math.floor((userData?.giftableCredits ?? 0) / 15);
@@ -990,20 +975,23 @@ const handleUpdateUsername = async (newUsername: string) => {
   const handleSetupComplete = async (role: string) => {
     if (userData?.uid) {
       try {
-        await AuthService.completeSetup(userData.uid, role as 'talk' | 'listen' | 'both');
+        await AuthService.completeSetup(
+          userData.uid,
+          role as "talk" | "listen" | "both",
+        );
       } catch (error) {
-        console.error('❌ Error completing setup:', error);
+        console.error("❌ Error completing setup:", error);
       }
     }
     if (userData) {
-        setUserData({ ...userData, role, hasCompletedSetup: true });
+      setUserData({ ...userData, role, hasCompletedSetup: true });
     }
     setSetupCompleted(true);
-    navigationRef.current?.navigate('Empty');
+    navigationRef.current?.navigate("Empty");
   };
 
   const hasActiveSession = () => {
-    return chatSession?.status === 'active';
+    return chatSession?.status === "active";
   };
 
   if (!isAuthenticated) {
@@ -1014,7 +1002,7 @@ const handleUpdateUsername = async (newUsername: string) => {
           <Stack.Navigator screenOptions={{ headerShown: false }}>
             <Stack.Screen name="SignIn">
               {() => <SignInScreen onSignIn={handleSignIn} />}
-            </Stack.Screen> 
+            </Stack.Screen>
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>
@@ -1031,7 +1019,9 @@ const handleUpdateUsername = async (newUsername: string) => {
               {() => (
                 <SetupScreen
                   onComplete={handleSetupComplete}
-                  onShowAccount={() => navigationRef.current?.navigate("Account")}
+                  onShowAccount={() =>
+                    navigationRef.current?.navigate("Account")
+                  }
                 />
               )}
             </Stack.Screen>
@@ -1045,8 +1035,11 @@ const handleUpdateUsername = async (newUsername: string) => {
     <SafeAreaProvider>
       <StatusBar barStyle="light-content" backgroundColor="#0f0f23" />
       <NavigationContainer ref={navigationRef} theme={MyTheme}>
-        <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Empty">
-        <Stack.Screen name="Empty">
+        <Stack.Navigator
+          screenOptions={{ headerShown: false }}
+          initialRouteName="Empty"
+        >
+          <Stack.Screen name="Empty">
             {() => (
               <EmptyState
                 onBack={() => navigationRef.current?.navigate("Setup")}
@@ -1056,7 +1049,7 @@ const handleUpdateUsername = async (newUsername: string) => {
               />
             )}
           </Stack.Screen>
-          
+
           <Stack.Screen name="Chat">
             {() => <ChatScreen onCloseChat={handleCloseChat} />}
           </Stack.Screen>
@@ -1069,7 +1062,9 @@ const handleUpdateUsername = async (newUsername: string) => {
                 dailyFreeTimeRemaining={freeTimeRemaining}
                 paidTimeAvailable={userData?.paidTimeAvailable || 0}
                 onBack={() => navigation.goBack()}
-                onShowReferral={() => navigationRef.current?.navigate("Referral")}
+                onShowReferral={() =>
+                  navigationRef.current?.navigate("Referral")
+                }
                 onShowRewards={() => navigationRef.current?.navigate("Rewards")}
                 onPremium={() => navigationRef.current?.navigate("Premium")}
                 onLogout={handleLogout}
@@ -1117,16 +1112,38 @@ const handleUpdateUsername = async (newUsername: string) => {
         </Stack.Navigator>
 
         {/* Modals */}
-        <TimerPopup isOpen={false} onClose={() => {}} credits={0} onExtendTime={() => {}} onGoToPremium={() => {}} />
-        <LowTimeAlert isOpen={false} onClose={() => {}} freeTimeLeft={0} paidTimeLeft={0} credits={0} onBuyTime={() => {}} onGoToPremium={() => {}} />
-        <InterstitialAd isOpen={false} onClose={() => {}} onWatchAd={() => {}} partnerChangeCount={0} />
-        <RatingPopup isOpen={false} onClose={() => {}} interlocutorName="" onSubmitRating={() => {}} />
+        <TimerPopup
+          isOpen={false}
+          onClose={() => {}}
+          credits={0}
+          onExtendTime={() => {}}
+          onGoToPremium={() => {}}
+        />
+        <LowTimeAlert
+          isOpen={false}
+          onClose={() => {}}
+          freeTimeLeft={0}
+          paidTimeLeft={0}
+          credits={0}
+          onBuyTime={() => {}}
+          onGoToPremium={() => {}}
+        />
+        <InterstitialAd
+          isOpen={false}
+          onClose={() => {}}
+          onWatchAd={() => {}}
+          partnerChangeCount={0}
+        />
+        <RatingPopup
+          isOpen={false}
+          onClose={() => {}}
+          interlocutorName=""
+          onSubmitRating={() => {}}
+        />
       </NavigationContainer>
     </SafeAreaProvider>
   );
 }
-
-
 
 // import React, { useState, useCallback } from "react";
 // import { StyleSheet, StatusBar } from "react-native";
@@ -1265,11 +1282,11 @@ const handleUpdateUsername = async (newUsername: string) => {
 //     if (userData.isPremium) return Infinity;
 //     checkDailyReset();
 //     const dailyLimit = 20 * 60;
-    
+
 //     if (userData.preservedFreeTime !== undefined) {
 //       return userData.preservedFreeTime;
 //     }
-    
+
 //     return Math.max(0, dailyLimit - userData.dailyFreeTimeUsed);
 //   };
 
@@ -1278,7 +1295,7 @@ const handleUpdateUsername = async (newUsername: string) => {
 //     if (userData.preservedPaidTime !== undefined) {
 //       return userData.preservedPaidTime;
 //     }
-    
+
 //     return userData.paidTimeAvailable;
 //   };
 
@@ -1298,9 +1315,9 @@ const handleUpdateUsername = async (newUsername: string) => {
 //     const usernames = ["@Eclipse", "@Moonlight", "@Stargazer", "@Phoenix", "@Mystic", "@Aurora", "@Cosmic", "@Zen"];
 //     const ratings = [4.2, 4.4, 4.6, 4.8, 4.9, 4.3, 4.7, 4.5];
 //     const ambassadorChance = Math.random() > 0.7;
-    
+
 //     const randomIndex = Math.floor(Math.random() * usernames.length);
-    
+
 //     return {
 //       username: usernames[randomIndex],
 //       rating: ratings[randomIndex],
@@ -1312,7 +1329,7 @@ const handleUpdateUsername = async (newUsername: string) => {
 //   const startNewChatSession = (preserveFreeTime?: number, preservePaidTime?: number) => {
 //     const freeTime = preserveFreeTime !== undefined ? preserveFreeTime : getRemainingFreeTime();
 //     const paidTime = preservePaidTime !== undefined ? preservePaidTime : getAvailablePaidTime();
-    
+
 //     const newSession: ChatSession = {
 //       id: Date.now().toString(),
 //       startTime: Date.now(),
@@ -1325,7 +1342,7 @@ const handleUpdateUsername = async (newUsername: string) => {
 //       isActive: true
 //     };
 //     setChatSession(newSession);
-    
+
 //     setUserData(prev => ({
 //       ...prev,
 //       preservedFreeTime: undefined,
@@ -1336,51 +1353,51 @@ const handleUpdateUsername = async (newUsername: string) => {
 //   // ✅ FONCTION DE CONNEXION CORRIGÉE
 //   const handleSignIn = (username: string, userProfile: any) => {
 //     console.log('🎯 handleSignIn appelé avec:', { username, uid: userProfile.uid });
-    
-//     setUserData(prev => ({ 
-//       ...prev, 
+
+//     setUserData(prev => ({
+//       ...prev,
 //       ...userProfile,
-//       username 
+//       username
 //     }));
-    
+
 //     // Marquer comme authentifié
 //     setIsAuthenticated(true);
-    
+
 //     // ✅ MISE À JOUR : Si setup déjà terminé, mettre à jour l'état séparé
 //     if (userProfile.hasCompletedSetup) {
 //       console.log('✅ Setup déjà terminé lors de la connexion');
 //       setSetupCompleted(true);
 //     }
-    
+
 //     console.log('✅ Utilisateur authentifié, hasCompletedSetup:', userProfile.hasCompletedSetup);
-    
+
 //     // Pas besoin de navigation manuelle - React Navigation va gérer automatiquement
 //   };
 
 //   const handleSetupComplete = async (role: string) => {
 //     try {
 //       console.log('🔄 Setup en cours pour le rôle:', role);
-      
+
 //       if (userData.uid) {
 //         const { AuthService } = await import('./services/authService');
 //         await AuthService.completeSetup(userData.uid, role as 'talk' | 'listen' | 'both');
 //         console.log('✅ Setup sauvegardé dans Firebase');
 //       }
-      
+
 //       // ✅ MISE À JOUR : Utiliser les deux états
 //       setUserData(prev => ({ ...prev, role, hasCompletedSetup: true }));
 //       setSetupCompleted(true); // ← Force immédiatement
-      
+
 //       console.log('✅ Setup terminé, états mis à jour');
-      
+
 //     } catch (error) {
 //       console.error('Error completing setup:', error);
 //       console.log('⚠️ Erreur setup, mais continuons quand même...');
-      
+
 //       // Même logique en cas d'erreur
 //       setUserData(prev => ({ ...prev, role, hasCompletedSetup: true }));
 //       setSetupCompleted(true); // ← Force aussi en cas d'erreur
-      
+
 //       console.log('✅ Setup terminé (avec erreur)');
 //     }
 //   };
@@ -1406,7 +1423,7 @@ const handleUpdateUsername = async (newUsername: string) => {
 //     }
 
 //     const qualifiesForRating = sessionData.duration >= 300 || sessionData.messageCount >= 10;
-    
+
 //     if (qualifiesForRating) {
 //       setCurrentSessionData(sessionData);
 //       setShowRatingPopup(true);
@@ -1419,13 +1436,13 @@ const handleUpdateUsername = async (newUsername: string) => {
 //       preservedFreeTime: freeTimeLeft,
 //       preservedPaidTime: paidTimeLeft
 //     }));
-    
+
 //     if (chatSession) {
 //       setChatSession(prev => prev ? { ...prev, isActive: false } : null);
 //     }
-    
+
 //     navigationRef.current?.navigate('Empty');
-    
+
 //     console.log("Chat closed, time preserved:", { freeTimeLeft, paidTimeLeft });
 //   }, [chatSession]);
 
@@ -1433,11 +1450,11 @@ const handleUpdateUsername = async (newUsername: string) => {
 //   const handlePartnerChange = () => {
 //     if (chatSession) {
 //       const duration = Math.floor((Date.now() - chatSession.startTime) / 1000);
-      
+
 //       if (!userData.isPremium) {
 //         const freeTimeUsed = Math.min(duration, chatSession.freeTimeLeft || 0);
 //         const paidTimeUsed = Math.max(0, duration - freeTimeUsed);
-        
+
 //         setUserData(prev => ({
 //           ...prev,
 //           dailyFreeTimeUsed: prev.dailyFreeTimeUsed + freeTimeUsed,
@@ -1450,13 +1467,13 @@ const handleUpdateUsername = async (newUsername: string) => {
 //           partnerChangeCount: prev.partnerChangeCount + 1
 //         }));
 //       }
-      
+
 //       const newChangeCount = userData.partnerChangeCount + 1;
 //       if (!userData.isPremium && newChangeCount % 5 === 0) {
 //         setShowInterstitialAd(true);
 //         return;
 //       }
-      
+
 //       setChatSession(prev => prev ? { ...prev, isActive: false } : null);
 //       navigationRef.current?.navigate('Empty');
 //     }
@@ -1477,12 +1494,12 @@ const handleUpdateUsername = async (newUsername: string) => {
 //   }, [chatSession]);
 
 //   const handleSubmitRating = (rating: number, comment: string) => {
-//     console.log("Rating submitted:", { 
-//       rating, 
-//       comment, 
-//       interlocutor: currentSessionData?.interlocutor?.username 
+//     console.log("Rating submitted:", {
+//       rating,
+//       comment,
+//       interlocutor: currentSessionData?.interlocutor?.username
 //     });
-    
+
 //     setShowRatingPopup(false);
 //     setCurrentSessionData(null);
 //   };
@@ -1490,20 +1507,20 @@ const handleUpdateUsername = async (newUsername: string) => {
 //   const handleExtendTime = (option: string) => {
 //     const costs = { "30min": 5, "1hour": 10, "24hour": 20 };
 //     const cost = costs[option as keyof typeof costs];
-    
+
 //     if (userData.credits >= cost) {
 //       setUserData(prev => ({ ...prev, credits: prev.credits - cost }));
 //       setShowTimerPopup(false);
-      
+
 //       const extensionTime = option === "30min" ? 30 * 60 : option === "1hour" ? 60 * 60 : 24 * 60 * 60;
 //       setUserData(prev => ({
 //         ...prev,
 //         paidTimeAvailable: prev.paidTimeAvailable + extensionTime
 //       }));
-      
+
 //       if (chatSession) {
-//         const updatedSession = { 
-//           ...chatSession, 
+//         const updatedSession = {
+//           ...chatSession,
 //           paidTimeLeft: (chatSession.paidTimeLeft || 0) + extensionTime,
 //           isActive: true
 //         };
@@ -1530,21 +1547,21 @@ const handleUpdateUsername = async (newUsername: string) => {
 //   const handleBuyTime = useCallback((option: string, creditsRequired: number, minutes: number) => {
 //     if (userData.credits >= creditsRequired) {
 //       setUserData(prev => ({ ...prev, credits: prev.credits - creditsRequired }));
-      
+
 //       const extensionTime = minutes * 60;
 //       setUserData(prev => ({
 //         ...prev,
 //         paidTimeAvailable: prev.paidTimeAvailable + extensionTime
 //       }));
-      
+
 //       if (chatSession) {
-//         const updatedSession = { 
-//           ...chatSession, 
-//           paidTimeLeft: (chatSession.paidTimeLeft || 0) + extensionTime 
+//         const updatedSession = {
+//           ...chatSession,
+//           paidTimeLeft: (chatSession.paidTimeLeft || 0) + extensionTime
 //         };
 //         setChatSession(updatedSession);
 //       }
-      
+
 //       setShowLowTimeAlert(false);
 //       console.log("Time purchased:", { option, creditsRequired, minutes });
 //     }
@@ -1556,26 +1573,26 @@ const handleUpdateUsername = async (newUsername: string) => {
 //         ...prev,
 //         credits: prev.credits - creditsToUse
 //       }));
-      
-//       console.log("Credits consumed immediately:", { 
-//         creditsUsed: creditsToUse, 
-//         remainingCredits: userData.credits - creditsToUse 
+
+//       console.log("Credits consumed immediately:", {
+//         creditsUsed: creditsToUse,
+//         remainingCredits: userData.credits - creditsToUse
 //       });
 //     }
 //   }, [userData.credits]);
 
 //   const handleSendCredits = useCallback((amount: number) => {
-//     setUserData(prev => ({ 
-//       ...prev, 
-//       giftableCredits: prev.giftableCredits - amount 
+//     setUserData(prev => ({
+//       ...prev,
+//       giftableCredits: prev.giftableCredits - amount
 //     }));
 //     console.log("Credits sent:", amount);
 //   }, []);
 
 //   const handleCreditDeducted = useCallback(() => {
-//     setUserData(prev => ({ 
-//       ...prev, 
-//       credits: Math.max(0, prev.credits - 1) 
+//     setUserData(prev => ({
+//       ...prev,
+//       credits: Math.max(0, prev.credits - 1)
 //     }));
 //   }, []);
 
@@ -1584,14 +1601,14 @@ const handleUpdateUsername = async (newUsername: string) => {
 //       if (!prevSession || prevSession.id !== session.id) {
 //         return { ...session, isActive: true };
 //       }
-      
-//       const hasChanged = 
+
+//       const hasChanged =
 //         prevSession.freeTimeLeft !== session.freeTimeLeft ||
 //         prevSession.paidTimeLeft !== session.paidTimeLeft ||
 //         prevSession.hasReceivedGift !== session.hasReceivedGift ||
 //         prevSession.saveConversation !== session.saveConversation ||
 //         (prevSession.messages?.length || 0) !== (session.messages?.length || 0);
-      
+
 //       return hasChanged ? { ...session, isActive: prevSession.isActive } : prevSession;
 //     });
 //   }, []);
@@ -1613,13 +1630,13 @@ const handleUpdateUsername = async (newUsername: string) => {
 //   const handleConvertCredits = () => {
 //     const rewardsEarned = Math.floor(userData.giftableCredits / 15);
 //     const creditsUsed = rewardsEarned * 15;
-    
-//     setUserData(prev => ({ 
-//       ...prev, 
+
+//     setUserData(prev => ({
+//       ...prev,
 //       giftableCredits: prev.giftableCredits - creditsUsed,
 //       totalRewards: prev.totalRewards + rewardsEarned
 //     }));
-    
+
 //     console.log("Credits converted:", { rewardsEarned, creditsUsed });
 //   };
 
@@ -1651,14 +1668,14 @@ const handleUpdateUsername = async (newUsername: string) => {
 //   const handleFindPartner = async () => {
 //     try {
 //       setIsSearchingForPartner(true);
-      
+
 //       const { MatchingService } = await import('./services/matchingService');
 //       const { requestId, promise } = await MatchingService.findMatch(userData as any);
-      
+
 //       const result = await promise;
-      
+
 //       setIsSearchingForPartner(false);
-      
+
 //       if (result.success && result.chatId && result.partner) {
 //         const newSession: ChatSession = {
 //           id: result.chatId,
@@ -1675,7 +1692,7 @@ const handleUpdateUsername = async (newUsername: string) => {
 //           saveConversation: false,
 //           isActive: true
 //         };
-        
+
 //         setChatSession(newSession);
 //         navigationRef.current?.navigate('Chat');
 //       } else {
@@ -1699,10 +1716,10 @@ const handleUpdateUsername = async (newUsername: string) => {
 //       rating: 5.0,
 //       isAmbassador: true
 //     };
-    
+
 //     const freeTime = getRemainingFreeTime();
 //     const paidTime = getAvailablePaidTime();
-    
+
 //     const aiSession: ChatSession = {
 //       id: "ai-" + Date.now().toString(),
 //       startTime: Date.now(),
@@ -1714,15 +1731,15 @@ const handleUpdateUsername = async (newUsername: string) => {
 //       saveConversation: false,
 //       isActive: true
 //     };
-    
+
 //     setChatSession(aiSession);
-    
+
 //     setUserData(prev => ({
 //       ...prev,
 //       preservedFreeTime: undefined,
 //       preservedPaidTime: undefined
 //     }));
-    
+
 //     navigationRef.current?.navigate('Chat');
 //   };
 
@@ -1783,7 +1800,7 @@ const handleUpdateUsername = async (newUsername: string) => {
 //     <SafeAreaProvider>
 //       <StatusBar barStyle="light-content" backgroundColor="#0f0f23" />
 //       <NavigationContainer ref={navigationRef}>
-//         <Stack.Navigator 
+//         <Stack.Navigator
 //           screenOptions={{
 //             headerShown: false,
 //             cardStyle: { backgroundColor: '#0f0f23' }
@@ -1819,7 +1836,7 @@ const handleUpdateUsername = async (newUsername: string) => {
 //               />
 //             ) : null}
 //           </Stack.Screen>
-          
+
 //           <Stack.Screen name="Account">
 //             {() => (
 //               <AccountScreen
@@ -1836,7 +1853,7 @@ const handleUpdateUsername = async (newUsername: string) => {
 //               />
 //             )}
 //           </Stack.Screen>
-          
+
 //           <Stack.Screen name="Referral">
 //             {() => (
 //               <ReferralScreen
@@ -1847,7 +1864,7 @@ const handleUpdateUsername = async (newUsername: string) => {
 //               />
 //             )}
 //           </Stack.Screen>
-          
+
 //           <Stack.Screen name="Rewards">
 //             {() => (
 //               <MyRewardsScreen
@@ -1858,7 +1875,7 @@ const handleUpdateUsername = async (newUsername: string) => {
 //               />
 //             )}
 //           </Stack.Screen>
-          
+
 //           <Stack.Screen name="Premium">
 //             {() => (
 //               <PremiumScreen
@@ -1868,7 +1885,7 @@ const handleUpdateUsername = async (newUsername: string) => {
 //               />
 //             )}
 //           </Stack.Screen>
-          
+
 //           <Stack.Screen name="Empty">
 //             {() => (
 //               <EmptyState
