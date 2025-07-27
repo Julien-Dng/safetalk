@@ -122,7 +122,6 @@ export default function ChatScreenWithProps({
   const [inputText, setInputText] = useState("");
   const [timerState, setTimerState] = useState<TimerState | null>(null);
   const [creditsActivated, setCreditsActivated] = useState(false);
-  const [isChangingPartner, setIsChangingPartner] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const messagesEndRef = useRef<ScrollView>(null);
@@ -202,7 +201,7 @@ export default function ChatScreenWithProps({
   };
 
   const handleSendMessage = async () => {
-    if (!inputText.trim() || loading) return;
+    if (!inputText.trim() || loading || isSearching) return;
     setLoading(true);
     try {
       await ChatService.sendMessage(
@@ -243,16 +242,12 @@ export default function ChatScreenWithProps({
       return; // Don't allow changing AI
     }
     
-    setIsChangingPartner(true);
+    if (isSearching) {
+      return; // Déjà en train de chercher
+    }
     
-    // End current chat session
-    ChatService.endChatSession(
-      chatSession.id,
-      Math.floor((Date.now() - chatSession.metadata.startTime) / 1000),
-      messages.filter(m => m.sender !== 'system').length
-    );
-    
-    onPartnerChange();
+    // Plus besoin de setIsChangingPartner, on utilise isSearching global
+    onPartnerChange(); // Cette fonction gère le matchmaking et met isSearchingPartner à true
   };
 
   // Use credits
@@ -320,7 +315,7 @@ export default function ChatScreenWithProps({
           <TouchableOpacity
             style={styles.closeButton}
             onPress={handleCloseChat}
-            disabled={isChangingPartner}
+            disabled={isSearching}
           >
             <Ionicons name="close" size={20} color="#c4b5fd" />
           </TouchableOpacity>
@@ -328,9 +323,9 @@ export default function ChatScreenWithProps({
           {/* Partner Info */}
           <View style={styles.partnerInfo}>
             <Text style={styles.partnerName}>
-              {interlocutor.username}
+              {isSearching ? "Finding new partner..." : interlocutor.username}
             </Text>
-            {interlocutor.isAmbassador && (
+            {!isSearching && interlocutor.isAmbassador && (
               <View style={styles.ambassadorBadge}>
                 <Ionicons name="shield-checkmark" size={12} color="#ffffff" />
                 <Text style={styles.ambassadorText}>
@@ -338,12 +333,15 @@ export default function ChatScreenWithProps({
                 </Text>
               </View>
             )}
+            {isSearching && (
+              <Text style={styles.searchingText}>Looking for someone new to chat with...</Text>
+            )}
           </View>
           
           <TouchableOpacity
             style={styles.menuButton}
             onPress={onShowAccount}
-            disabled={isChangingPartner}
+            disabled={isSearching}
           >
             <Ionicons name="settings-outline" size={20} color="#c4b5fd" />
           </TouchableOpacity>
@@ -443,17 +441,20 @@ export default function ChatScreenWithProps({
           {!chatSession.isAIChat && 
            !chatSession.participantUsernames.includes("@SafetalkAI") && (
             <TouchableOpacity
-              style={styles.changePartnerButton}
+              style={[
+                styles.changePartnerButton,
+                isSearching && styles.buttonDisabled
+              ]}
               onPress={handleChangePartner}
-              disabled={isChangingPartner}
+              disabled={isSearching}
             >
               <Ionicons 
-                name="refresh-outline" 
+                name={isSearching ? "search" : "refresh-outline"}
                 size={16} 
                 color="#c4b5fd" 
               />
               <Text style={styles.changePartnerText}>
-                {isChangingPartner ? "Ending Chat..." : "Change Partner"}
+                {isSearching ? "Finding Partner..." : "Change Partner"}
               </Text>
             </TouchableOpacity>
           )}
@@ -464,19 +465,23 @@ export default function ChatScreenWithProps({
               style={styles.textInput}
               value={inputText}
               onChangeText={setInputText}
-              placeholder="Type your message..."
+              placeholder={
+                isSearching 
+                  ? "Finding new partner..."
+                  : "Type your message..."
+              }
               placeholderTextColor="#7c3aed"
               multiline
               maxLength={500}
-              editable={!isChangingPartner && !loading}
+              editable={!loading && !isSearching}
             />
             <TouchableOpacity
               style={[
                 styles.sendButton,
-                (!inputText.trim() || loading || isChangingPartner) && styles.sendButtonDisabled
+                (!inputText.trim() || loading || isSearching) && styles.sendButtonDisabled
               ]}
               onPress={handleSendMessage}
-              disabled={!inputText.trim() || loading || isChangingPartner}
+              disabled={!inputText.trim() || loading || isSearching}
             >
               <Ionicons 
                 name="send" 
@@ -693,6 +698,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sendButtonDisabled: {
+    opacity: 0.5,
+  },
+  // 🆕 Nouveaux styles pour la logique de recherche
+  searchingText: {
+    color: '#a78bfa',
+    fontSize: 12,
+    fontStyle: 'italic',
+  },
+  buttonDisabled: {
     opacity: 0.5,
   },
 });

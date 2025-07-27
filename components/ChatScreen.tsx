@@ -11,9 +11,11 @@ const DAILY_FREE_LIMIT_SEC = 20 * 60;
 
 interface ChatScreenProps {
   onCloseChat: (freeTimeLeft: number, paidTimeLeft: number) => void;
+  onChangePartner: (sessionId: string) => void; // 🆕 Fonction pour changer de partenaire
+  isSearchingPartner: boolean; // 🆕 État de recherche pour désactiver les boutons
 }
 
-export default function ChatScreen({ onCloseChat }: ChatScreenProps) {
+export default function ChatScreen({ onCloseChat, onChangePartner, isSearchingPartner }: ChatScreenProps) {
   const { params } = useRoute<any>();
   const { sessionId, chatType } = params || {};
   const navigation = useNavigation<any>();
@@ -82,16 +84,15 @@ export default function ChatScreen({ onCloseChat }: ChatScreenProps) {
       giftableCredits={user.giftableCredits}
       dailyFreeTimeRemaining={freeTimeRemaining}
       paidTimeAvailable={user.paidTimeAvailable}
-      isSearching={false} // Plus de logique de recherche ici
+      isSearching={isSearchingPartner} // 🆕 Utiliser l'état de recherche global
       onBack={() => {}}
       onCloseChat={onCloseChat}
       onTimerEnd={() => {}}
       onShowAccount={() => navigation.navigate('Account')}
       onChatEnd={() => {}}
       onPartnerChange={() => {
-        // Pour changer de partenaire, on retourne à l'écran principal
-        // et l'utilisateur peut relancer une recherche
-        navigation.navigate('Empty');
+        // 🆕 Appeler la fonction de changement de partenaire avec l'ID de session
+        onChangePartner(session.id);
       }}
       onUserBlocked={() => {}}
       onUserReported={() => {}}

@@ -114,12 +114,17 @@ export default function App() {
     setSetupCompleted(profile.hasCompletedSetup);
   };
 
-  // 🆕 Nouvelle logique pour Find Partner avec matchmaking
-  const handleFindPartner = async () => {
+  // 🆕 Logique de matchmaking centralisée
+  const startMatchmaking = async (shouldNavigateToEmpty = false) => {
     if (!userData || isSearchingPartner) return;
     
     setIsSearchingPartner(true);
     console.log('🔍 Starting partner search...');
+    
+    // Si on doit naviguer vers EmptyState (pour voir l'animation)
+    if (shouldNavigateToEmpty) {
+      navigationRef.current?.navigate('Empty');
+    }
     
     try {
       const { promise } = await MatchingService.findMatch(userData);
@@ -150,6 +155,54 @@ export default function App() {
       console.error('❌ Error during partner search:', error);
       setIsSearchingPartner(false);
       // Optionnel: afficher une erreur à l'utilisateur
+    }
+  };
+
+  // Handler pour Find Partner depuis EmptyState
+  const handleFindPartner = () => {
+    startMatchmaking(false); // Pas besoin de naviguer, on est déjà sur EmptyState
+  };
+
+  // 🆕 Handler pour Change Partner depuis ChatScreen (SANS navigation)
+  const handleChangePartner = async (currentSessionId: string) => {
+    if (!userData || isSearchingPartner) return;
+    
+    console.log('🔄 Changing partner for session:', currentSessionId);
+    
+    setIsSearchingPartner(true);
+    
+    try {
+      // Terminer la session actuelle
+      await ChatService.endChatSession(
+        currentSessionId,
+        Math.floor((Date.now() - (chatSession?.metadata.startTime || Date.now())) / 1000),
+        0
+      );
+      
+      console.log('✅ Current session ended, starting new matchmaking...');
+      
+      // Démarrer le matchmaking SANS navigation
+      const { promise } = await MatchingService.findMatch(userData);
+      const result = await promise;
+      
+      if (result.success && result.chatId) {
+        console.log('✅ New match found! Updating session...');
+        const newSession = await ChatService.getSessionById(result.chatId);
+        setChatSession(newSession);
+        setIsSearchingPartner(false);
+        // PAS de navigation - on reste sur ChatScreen qui se met à jour automatiquement
+      } else {
+        console.log('❌ No match found, creating mock session...');
+        // Fallback: créer une session avec un utilisateur de test
+        const randomUser = interlocuteurs[Math.floor(Math.random() * interlocuteurs.length)];
+        const mockSession = await ChatService.createChatSession(userData, randomUser, 'human', false);
+        setChatSession(mockSession);
+        setIsSearchingPartner(false);
+        // PAS de navigation - on reste sur ChatScreen
+      }
+    } catch (error) {
+      console.error('❌ Error during partner change:', error);
+      setIsSearchingPartner(false);
     }
   };
   
@@ -299,7 +352,13 @@ const handleUpdateUsername = async (newUsername: string) => {
           </Stack.Screen>
           
           <Stack.Screen name="Chat">
-            {() => <ChatScreen onCloseChat={handleCloseChat} />}
+            {() => (
+              <ChatScreen 
+                onCloseChat={handleCloseChat}
+                onChangePartner={handleChangePartner} // 🆕 Passer la fonction
+                isSearchingPartner={isSearchingPartner} // 🆕 Passer l'état de recherche
+              />
+            )}
           </Stack.Screen>
           <Stack.Screen name="Account">
             {({ navigation }) => (
