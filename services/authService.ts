@@ -259,6 +259,7 @@ export interface UserProfile {
   phoneNumber?: string;
   role: 'talk' | 'listen' | 'both';
   isPremium: boolean;
+  isAmbassador: boolean;
   credits: number;
   giftableCredits: number;
   dailyFreeTimeUsed: number;
@@ -402,6 +403,7 @@ export class AuthService {
       username: additionalData.username || user.displayName || 'User' + Math.floor(Math.random() * 1000),
       role: 'both',
       isPremium: false,
+      isAmbassador: false,
       credits: 5,
       giftableCredits: 0,
       dailyFreeTimeUsed: 0,

@@ -97,6 +97,7 @@ export default function ChatScreen({ onCloseChat }: ChatScreenProps) {
       role={user.role}
       credits={user.credits}
       isPremium={user.isPremium}
+      isAmbassador={user.isAmbassador}
       giftableCredits={user.giftableCredits}
       dailyFreeTimeRemaining={freeTimeRemaining}
       paidTimeAvailable={user.paidTimeAvailable}

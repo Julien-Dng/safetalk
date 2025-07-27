@@ -43,6 +43,7 @@ export interface ChatScreenProps {
   chatSession: ServiceChatSession;
   credits: number;
   isPremium: boolean;
+  isAmbassador: boolean;
   giftableCredits: number;
   dailyFreeTimeRemaining: number;
   paidTimeAvailable: number;
@@ -69,6 +70,7 @@ export default function ChatScreenWithProps({
   chatSession,
   credits,
   isPremium,
+  isAmbassador,
   giftableCredits,
   dailyFreeTimeRemaining,
   paidTimeAvailable,
