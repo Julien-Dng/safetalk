@@ -792,7 +792,6 @@ import type { ChatSession } from './services/chatService';
 import  { ChatService } from './services/chatService';
 
 // Import screens
-import { WelcomeScreen } from "./components/WelcomeScreen";
 import { SignInScreen } from "./components/SignInScreen";
 import { SetupScreen } from "./components/SetupScreen";
 import ChatScreen from "./components/ChatScreen";
