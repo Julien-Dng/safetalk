@@ -2,7 +2,6 @@ import React, {
   useState,
   useRef,
   useEffect,
-  useCallback,
 } from "react";
 import {
   View,
@@ -35,7 +34,6 @@ interface Message {
   timestamp: Date;
 }
 
-// Cette interface <–> props que vous recevez du wrapper
 export interface ChatScreenProps {
   uid: string;
   username: string;
@@ -61,7 +59,7 @@ export interface ChatScreenProps {
   onCreditDeducted: () => void;
   onUpdateSession: (session: ServiceChatSession) => void;
   onLowTimeAlert: (freeTimeLeft: number, paidTimeLeft: number) => void;
-  isSearching: boolean;
+  isSearching: boolean; // Garde la prop mais toujours false maintenant
 }
 
 export default function ChatScreenWithProps({
@@ -91,28 +89,45 @@ export default function ChatScreenWithProps({
   onLowTimeAlert,
   isSearching,
 }: ChatScreenProps) {
-    const partnerId = chatSession.participants.find((id) => id !== uid);
+  
+  // 1) Find partner ID (exclude current user)
+  const partnerId = chatSession.participants.find((id) => id !== uid);
 
-  // 2) Resolve their profile (or fall back to the AI)
-  const interlocutor = partnerId
-    ? chatSession.participantProfiles[partnerId]
-    : {
-        username: isSearching ? "..." : "@SafetalkAI",
-        isAmbassador: false,
-        rating: 0,
-        isPremium: false,
+  // 2) Resolve interlocutor profile
+  const interlocutor = (() => {
+    if (partnerId && chatSession.participantProfiles[partnerId]) {
+      return chatSession.participantProfiles[partnerId];
+    }
+    
+    // If it's an AI chat
+    if (chatSession.isAIChat || chatSession.participantUsernames.includes("@SafetalkAI")) {
+      return {
+        username: "@SafetalkAI",
+        isAmbassador: true,
+        rating: 5.0,
+        isPremium: true,
       };
+    }
+    
+    // Fallback for human chats
+    return {
+      username: "Unknown User",
+      isAmbassador: false,
+      rating: 0,
+      isPremium: false,
+    };
+  })();
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   const [timerState, setTimerState] = useState<TimerState | null>(null);
   const [creditsActivated, setCreditsActivated] = useState(false);
   const [isChangingPartner, setIsChangingPartner] = useState(false);
   const [loading, setLoading] = useState(false);
-  
 
   const messagesEndRef = useRef<ScrollView>(null);
   const timerService = useRef(TimerService.getInstance());
-  const timerUnsubscribe = useRef<(() => void) | null>(null)
+  const timerUnsubscribe = useRef<(() => void) | null>(null);
   const chatMessageUnsubscribe = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -122,42 +137,34 @@ export default function ChatScreenWithProps({
 
   const initializeChat = async () => {
     try {
-      // Timer
+      console.log('🔧 ChatScreenWithProps: Initializing chat for session:', chatSession.id);
+
+      // Timer initialization
       await timerService.current.initializeTimer(
         {
           uid,
           isPremium,
-          dailyFreeTimeUsed:
-            1200 - dailyFreeTimeRemaining,
+          dailyFreeTimeUsed: 1200 - dailyFreeTimeRemaining,
           paidTimeAvailable,
           dailyResetDate: new Date().toDateString(),
         } as any,
         chatSession.id
       );
-      const unSubTimer =
-        timerService.current.subscribe((state) => {
-          setTimerState(state);
-          const total =
-            state.freeTimeLeft +
-            state.paidTimeLeft;
-          if (
-            total <= 180 &&
-            total > 0 &&
-            !isPremium
-          ) {
-            onLowTimeAlert(
-              state.freeTimeLeft,
-              state.paidTimeLeft
-            );
-          }
-          if (total <= 0 && !isPremium) {
-            onTimerEnd();
-          }
-        });
-        timerUnsubscribe.current = unSubTimer
+      
+      const unSubTimer = timerService.current.subscribe((state) => {
+        setTimerState(state);
+        const total = state.freeTimeLeft + state.paidTimeLeft;
+        if (total <= 180 && total > 0 && !isPremium) {
+          onLowTimeAlert(state.freeTimeLeft, state.paidTimeLeft);
+        }
+        if (total <= 0 && !isPremium) {
+          onTimerEnd();
+        }
+      });
+      timerUnsubscribe.current = unSubTimer;
       timerService.current.startTimer();
 
-      // Messages
+      // Messages subscription
       const unSubMsgs = ChatService.subscribeToMessages(
         chatSession.id,
         (chatMessages: ChatMessage[]) => {
@@ -181,19 +188,9 @@ export default function ChatScreenWithProps({
       );
       chatMessageUnsubscribe.current = unSubMsgs;
 
-      // Premier message système
-      if (chatSession.metadata.messageCount === 0 && !isSearching) {
-        const welcome = getWelcomeMessage();
-        await ChatService.sendMessage(
-          chatSession.id,
-          "system",
-          "SafeTalk",
-          welcome,
-          "system"
-        );
-      }
+      console.log('✅ ChatScreenWithProps: Chat initialized successfully');
     } catch (err) {
-      console.error("Init chat error:", err);
+      console.error("❌ ChatScreenWithProps: Init chat error:", err);
     }
   };
 
@@ -202,24 +199,6 @@ export default function ChatScreenWithProps({
     timerUnsubscribe.current?.();
     chatMessageUnsubscribe.current?.();
     ChatService.unsubscribeFromChat(chatSession.id);
-  };
-
-  const getWelcomeMessage = () => {
-    if (
-      chatSession.participantUsernames.includes(
-        "@SafetalkAI"
-      )
-    ) {
-      return `Hello! I'm your AI companion…`;
-    }
-    switch (role) {
-      case "talk":
-        return "You have been connected …";
-      case "listen":
-        return "You have been connected …";
-      default:
-        return "You have been connected …";
-    }
   };
 
   const handleSendMessage = async () => {
@@ -245,7 +224,6 @@ export default function ChatScreenWithProps({
     const free = timerState?.freeTimeLeft ?? 0;
     const paid = timerState?.paidTimeLeft ?? 0;
 
-    // Mark the session as ended in the backend
     try {
       await ChatService.endChatSession(
         chatSession.id,
@@ -261,13 +239,19 @@ export default function ChatScreenWithProps({
 
   // Handle change partner
   const handleChangePartner = () => {
+    if (chatSession.isAIChat || chatSession.participantUsernames.includes("@SafetalkAI")) {
+      return; // Don't allow changing AI
+    }
+    
     setIsChangingPartner(true);
+    
     // End current chat session
     ChatService.endChatSession(
-       chatSession.id,
-       Math.floor((Date.now() - chatSession.metadata.startTime) / 1000),
+      chatSession.id,
+      Math.floor((Date.now() - chatSession.metadata.startTime) / 1000),
       messages.filter(m => m.sender !== 'system').length
     );
+    
     onPartnerChange();
   };
 
@@ -275,7 +259,6 @@ export default function ChatScreenWithProps({
   const handleUseCredits = async () => {
     if (credits > 0 && timerService.current) {
       try {
-        // Deduct credits from user account
         const success = await CreditService.deductCredits(
           uid,
           credits,
@@ -283,7 +266,6 @@ export default function ChatScreenWithProps({
         );
 
         if (success) {
-          // Activate credits in timer service
           timerService.current.useCredits(credits);
           setCreditsActivated(true);
           onUseCredits(credits);
@@ -335,7 +317,6 @@ export default function ChatScreenWithProps({
         
         {/* Header */}
         <View style={styles.header}>
-          {/* Close Chat Button */}
           <TouchableOpacity
             style={styles.closeButton}
             onPress={handleCloseChat}
@@ -347,7 +328,7 @@ export default function ChatScreenWithProps({
           {/* Partner Info */}
           <View style={styles.partnerInfo}>
             <Text style={styles.partnerName}>
-              {isSearching ? '...' : interlocutor.username}
+              {interlocutor.username}
             </Text>
             {interlocutor.isAmbassador && (
               <View style={styles.ambassadorBadge}>
@@ -359,7 +340,6 @@ export default function ChatScreenWithProps({
             )}
           </View>
           
-          {/* Menu Button */}
           <TouchableOpacity
             style={styles.menuButton}
             onPress={onShowAccount}
@@ -460,7 +440,8 @@ export default function ChatScreenWithProps({
         {/* Input Area */}
         <View style={styles.inputContainer}>
           {/* Change Partner Button - Only for human chats */}
-          {!isSearching && interlocutor.username !== "@SafetalkAI" && (
+          {!chatSession.isAIChat && 
+           !chatSession.participantUsernames.includes("@SafetalkAI") && (
             <TouchableOpacity
               style={styles.changePartnerButton}
               onPress={handleChangePartner}
@@ -472,7 +453,7 @@ export default function ChatScreenWithProps({
                 color="#c4b5fd" 
               />
               <Text style={styles.changePartnerText}>
-                {isChangingPartner ? "Finding Partner..." : "Change Partner"}
+                {isChangingPartner ? "Ending Chat..." : "Change Partner"}
               </Text>
             </TouchableOpacity>
           )}
@@ -483,23 +464,19 @@ export default function ChatScreenWithProps({
               style={styles.textInput}
               value={inputText}
               onChangeText={setInputText}
-              placeholder={
-                isChangingPartner || isSearching
-                  ? "Finding new partner..."
-                  : "Type your message..."
-              }
+              placeholder="Type your message..."
               placeholderTextColor="#7c3aed"
               multiline
               maxLength={500}
-              editable={!isChangingPartner && !loading && !isSearching}
+              editable={!isChangingPartner && !loading}
             />
             <TouchableOpacity
               style={[
                 styles.sendButton,
-                (!inputText.trim() || loading || isChangingPartner || isSearching) && styles.sendButtonDisabled
+                (!inputText.trim() || loading || isChangingPartner) && styles.sendButtonDisabled
               ]}
               onPress={handleSendMessage}
-              disabled={!inputText.trim() || loading || isChangingPartner || isSearching}
+              disabled={!inputText.trim() || loading || isChangingPartner}
             >
               <Ionicons 
                 name="send" 
@@ -514,6 +491,7 @@ export default function ChatScreenWithProps({
   );
 }
 
+// Styles remain exactly the same as before
 const styles = StyleSheet.create({
   container: {
     flex: 1,

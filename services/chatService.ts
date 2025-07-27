@@ -19,7 +19,6 @@ import { db } from '../config/firebase';
 import { UserProfile } from './authService';
 import { interlocuteurs } from '../interlocuteurs';
 
-
 export interface ChatMessage {
   id: string;
   chatId: string;
@@ -83,7 +82,7 @@ export class ChatService {
   // Create a new chat session
   static async createChatSession(
     user1: UserProfile,
-    user2: UserProfile | null, // null for AI chat
+    user2: UserProfile | null, // null for AI chat or during search
     sessionType: 'human' | 'ai' = 'human',
     isSearching = false
   ): Promise<ChatSession> {
@@ -95,22 +94,24 @@ export class ChatService {
       let participantProfiles: ChatSession['participantProfiles'] = {
         [user1.uid]: {
           username: user1.username,
-          isAmbassador: false,
-          rating: 0,
+          isAmbassador: user1.isAmbassador || false,
+          rating: 4.5,
           isPremium: user1.isPremium,
         },
       };
 
+      // Setup participants according to session type
       if (!isSearching) {
         if (isAIChat) {
           participantUsernames.push('@SafetalkAI');
+          // AI doesn't have an entry in participantProfiles as it's not a real user
         } else if (user2) {
           participants.push(user2.uid);
           participantUsernames.push(user2.username);
           participantProfiles[user2.uid] = {
             username: user2.username,
-            isAmbassador: false,
-            rating: 0,
+            isAmbassador: user2.isAmbassador || false,
+            rating: 4.5,
             isPremium: user2.isPremium,
           };
         }
@@ -138,10 +139,8 @@ export class ChatService {
 
       const chatRef = await addDoc(collection(db, 'chats'), chatData);
 
-      // Send welcome message
-      const welcomeMessage = isSearching
-        ? 'Finding a partner...'
-        : this.getWelcomeMessage(user1.role, isAIChat);
+      // Send appropriate welcome message
+      const welcomeMessage = this.getWelcomeMessage(user1.role, isAIChat, isSearching);
       await this.sendMessage(chatRef.id, 'system', 'SafeTalk', welcomeMessage, 'system');
 
       return {
@@ -150,7 +149,7 @@ export class ChatService {
         createdAt: new Date(),
         lastMessageAt: new Date()
       } as ChatSession;
-    }   catch (error) {
+    } catch (error) {
       console.error('Error creating chat session:', error);
       throw new Error('Failed to create chat session');
     }
@@ -184,14 +183,18 @@ export class ChatService {
         'metadata.messageCount': increment(1)
       });
 
-      // Simulate AI response for AI chats
+      // Simulate responses only for actual user messages (not system messages)
       if (type === 'text' && senderId !== 'system') {
-              const session = await this.getSessionById(chatId);
-        if (session?.isAIChat) {
+        const session = await this.getSessionById(chatId);
+        
+        if (session?.isAIChat && !session.isSearching) {
+          // AI response only if it's an AI chat and not searching
           this.scheduleAIResponse(chatId, text);
-        } else if (!session?.isSearching) {
+        } else if (!session?.isSearching && !session?.isAIChat) {
+          // Human response only if it's a human chat and not searching
           this.scheduleHumanResponse(chatId);
         }
+        // If isSearching is true, no automated responses
       }
 
       return {
@@ -228,7 +231,7 @@ export class ChatService {
       // Store unsubscribe function
       this.messageListeners.set(chatId, unsubscribe);
       return unsubscribe;
-     } catch (error) {
+    } catch (error) {
       console.error('Error subscribing to messages:', error);
       return () => {}; // Return empty function as fallback
     }
@@ -382,21 +385,43 @@ export class ChatService {
     };
   }
 
+  // Update chat session - enhanced to handle search state changes
   static async updateChatSession(
     chatId: string,
     data: Partial<ChatSession>
   ): Promise<void> {
     try {
       await updateDoc(doc(db, 'chats', chatId), data as any);
+      
+      // If stopping search and found a partner, send new welcome message
+      if (data.isSearching === false && data.participantUsernames) {
+        const session = await this.getSessionById(chatId);
+        if (session && !session.isAIChat && session.participants.length > 1) {
+          // Get the role of the first user
+          const firstUserId = session.participants[0];
+          const firstUserProfile = session.participantProfiles[firstUserId];
+          
+          if (firstUserProfile) {
+            const welcomeMessage = this.getWelcomeMessage('both', false, false);
+            await this.sendMessage(session.id, 'system', 'SafeTalk', welcomeMessage, 'system');
+          }
+        }
+      }
     } catch (error) {
       console.error('Error updating chat session:', error);
     }
   }
 
-  // Schedule AI response (simulated)
+  // Schedule AI response with search state verification
   private static scheduleAIResponse(chatId: string, userMessage: string): void {
     setTimeout(async () => {
       try {
+        // Check that the session is not in search mode
+        const session = await this.getSessionById(chatId);
+        if (session?.isSearching) {
+          return; // Don't respond if still searching
+        }
+
         const aiResponses = [
           "I hear you. That sounds like a challenging situation. How are you feeling about it right now?",
           "Thank you for sharing that with me. Your feelings are completely valid.",
@@ -417,16 +442,25 @@ export class ChatService {
     }, 2000 + Math.random() * 3000); // 2-5 second delay
   }
 
-    private static scheduleHumanResponse(chatId: string): void {
+  private static scheduleHumanResponse(chatId: string): void {
     setTimeout(async () => {
       try {
+        // Check that the session is not in search mode
+        const session = await this.getSessionById(chatId);
+        if (session?.isSearching) {
+          return; // Don't respond if still searching
+        }
+
         const humanResponses = [
           'Hi there! How are you doing?',
           "That's interesting, tell me more!",
           'I appreciate you sharing that.',
           "I'm here to listen if you want to talk.",
           'Sounds good to me.',
-          'Thanks for telling me!'
+          'Thanks for telling me!',
+          'I understand how you feel.',
+          'That must be tough to deal with.',
+          'How has your day been so far?'
         ];
 
         const randomUser = interlocuteurs[Math.floor(Math.random() * interlocuteurs.length)];
@@ -438,13 +472,19 @@ export class ChatService {
     }, 2000 + Math.random() * 3000);
   }
 
+  // Get welcome message with search state consideration
+  private static getWelcomeMessage(role: string, isAIChat: boolean, isSearching: boolean): string {
+    // If searching for a partner
+    if (isSearching) {
+      return "Finding a partner...";
+    }
 
-  // Get welcome message based on user role
-  private static getWelcomeMessage(role: string, isAIChat: boolean): string {
+    // If it's an AI chat
     if (isAIChat) {
       return "Hello! I'm your AI companion. I'm here to listen and support you. Feel free to share anything on your mind.";
     }
 
+    // Human chat messages based on role
     switch (role) {
       case 'talk':
         return "You have been connected to someone who wants to listen. Feel free to share what's on your mind.";
@@ -480,4 +520,3 @@ export class ChatService {
     }
   }
 }
-

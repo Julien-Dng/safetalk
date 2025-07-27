@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   StyleSheet,
   SafeAreaView,
   StatusBar,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -25,6 +26,7 @@ interface EmptyStateProps {
   onFindPartner: () => void;
   onChatWithAI: () => void;
   onShowAccount: () => void;
+  isSearchingPartner: boolean; // 🆕 Prop pour l'état de recherche
 }
 
 // Custom Card Component
@@ -38,8 +40,41 @@ export function EmptyState({
   onBack,
   onFindPartner,
   onChatWithAI,
-  onShowAccount
+  onShowAccount,
+  isSearchingPartner
 }: EmptyStateProps) {
+  // Animation pour le clignotement
+  const blinkAnimation = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (isSearchingPartner) {
+      // Démarrer l'animation de clignotement
+      const blink = () => {
+        Animated.sequence([
+          Animated.timing(blinkAnimation, {
+            toValue: 0.3,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(blinkAnimation, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ]).start(() => {
+          // Répéter l'animation si on est toujours en recherche
+          if (isSearchingPartner) {
+            blink();
+          }
+        });
+      };
+      blink();
+    } else {
+      // Arrêter l'animation et remettre l'opacité à 1
+      blinkAnimation.setValue(1);
+    }
+  }, [isSearchingPartner, blinkAnimation]);
+
   return (
     <LinearGradient 
       colors={['#0f0f23', '#1a1a2e', '#16213e']} 
@@ -51,17 +86,19 @@ export function EmptyState({
         {/* Header with Back and Account Buttons */}
         <View style={styles.header}>
           <TouchableOpacity
-            style={styles.backButton}
+            style={[styles.backButton, isSearchingPartner && styles.buttonDisabled]}
             onPress={onBack}
             activeOpacity={0.7}
+            disabled={isSearchingPartner}
           >
             <ArrowLeft size={24} color="#ffffff" />
           </TouchableOpacity>
           
           <TouchableOpacity
-            style={styles.accountButton}
+            style={[styles.accountButton, isSearchingPartner && styles.buttonDisabled]}
             onPress={onShowAccount}
             activeOpacity={0.7}
+            disabled={isSearchingPartner}
           >
             <Settings size={20} color="#c4b5fd" />
           </TouchableOpacity>
@@ -70,33 +107,49 @@ export function EmptyState({
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.mainContent}>
             {/* Illustration */}
-            <View style={styles.illustrationSection}>
+            <View style={[styles.illustrationSection, isSearchingPartner && styles.sectionFaded]}>
               <View style={styles.illustrationIcon}>
                 <Users size={40} color="#7c3aed" />
               </View>
-              <Text style={styles.mainTitle}>No one is available right now</Text>
+              <Text style={styles.mainTitle}>
+                {isSearchingPartner ? "Searching for a partner..." : "No one is available right now"}
+              </Text>
               <Text style={styles.mainSubtitle}>
-                Don't worry, people join Safetalk throughout the day. You can
-                try again in a few minutes.
+                {isSearchingPartner 
+                  ? "We're looking for someone who wants to chat with you. This usually takes a few seconds."
+                  : "Don't worry, people join Safetalk throughout the day. You can try again in a few minutes."
+                }
               </Text>
             </View>
 
             {/* Actions */}
             <View style={styles.actionsSection}>
               {/* Find a partner Button */}
-              <TouchableOpacity
-                style={styles.findPartnerButton}
-                onPress={onFindPartner}
-                activeOpacity={0.8}
-              >
-                <View style={styles.findPartnerButtonContent}>
-                  <Search size={16} color="#ffffff" />
-                  <Text style={styles.findPartnerButtonText}>Find a partner</Text>
-                </View>
-              </TouchableOpacity>
+              <Animated.View style={{ opacity: isSearchingPartner ? blinkAnimation : 1 }}>
+                <TouchableOpacity
+                  style={[
+                    styles.findPartnerButton,
+                    isSearchingPartner && styles.findPartnerButtonSearching
+                  ]}
+                  onPress={onFindPartner}
+                  activeOpacity={0.8}
+                  disabled={isSearchingPartner}
+                >
+                  <View style={styles.findPartnerButtonContent}>
+                    {isSearchingPartner ? (
+                      <Search size={16} color="#ffffff" />
+                    ) : (
+                      <Search size={16} color="#ffffff" />
+                    )}
+                    <Text style={styles.findPartnerButtonText}>
+                      {isSearchingPartner ? "Finding a partner..." : "Find a partner"}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </Animated.View>
 
               {/* Divider */}
-              <View style={styles.divider}>
+              <View style={[styles.divider, isSearchingPartner && styles.sectionFaded]}>
                 <View style={styles.dividerLine} />
                 <Text style={styles.dividerText}>or</Text>
                 <View style={styles.dividerLine} />
@@ -104,9 +157,13 @@ export function EmptyState({
 
               {/* Chat with AI Button */}
               <TouchableOpacity
-                style={styles.aiButton}
+                style={[
+                  styles.aiButton,
+                  isSearchingPartner && styles.buttonDisabled
+                ]}
                 onPress={onChatWithAI}
                 activeOpacity={0.8}
+                disabled={isSearchingPartner}
               >
                 <View style={styles.aiButtonContent}>
                   <Bot size={16} color="#c4b5fd" />
@@ -114,50 +171,14 @@ export function EmptyState({
                 </View>
               </TouchableOpacity>
             </View>
-    
-            {/* Tips */}
-            {/* <Card style={styles.tipsCard}>
-              <View style={styles.tipsHeader}>
-                <Clock size={16} color="#c4b5fd" />
-                <Text style={styles.tipsTitle}>Best times to connect</Text>
-              </View>
-              <View style={styles.tipsContent}>
-                <View style={styles.tipRow}>
-                  <Text style={styles.tipLabel}>Peak hours:</Text>
-                  <Text style={styles.tipValue}>7-10 PM</Text>
-                </View>
-                <View style={styles.tipRow}>
-                  <Text style={styles.tipLabel}>Weekends:</Text>
-                  <Text style={styles.tipValue}>Most active</Text>
-                </View>
-                <View style={styles.tipRow}>
-                  <Text style={styles.tipLabel}>Time zones:</Text>
-                  <Text style={styles.tipValue}>Global users</Text>
-                </View>
-              </View>
-            </Card>
-
-            {/* <View style={styles.statsCard}>
-              <View style={styles.statsGrid}>
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>2.1K</Text>
-                  <Text style={styles.statLabel}>Active today</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>156</Text>
-                  <Text style={styles.statLabel}>Online now</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>45K</Text>
-                  <Text style={styles.statLabel}>Total chats</Text>
-                </View
-              </View>
-            </View>  */}
 
             {/* Footer */}
-            <View style={styles.footer}>
+            <View style={[styles.footer, isSearchingPartner && styles.sectionFaded]}>
               <Text style={styles.footerText}>New to Safetalk? Check out our</Text>
-              <TouchableOpacity style={styles.footerLink}>
+              <TouchableOpacity 
+                style={styles.footerLink}
+                disabled={isSearchingPartner}
+              >
                 <Text style={styles.footerLinkText}>Community Guidelines</Text>
               </TouchableOpacity>
             </View>
@@ -235,6 +256,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  findPartnerButtonSearching: {
+    backgroundColor: '#f59e0b', // Orange pendant la recherche
   },
   findPartnerButtonContent: {
     flexDirection: 'row',
@@ -399,5 +423,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     textDecorationLine: 'underline',
+  },
+  // 🆕 Nouveaux styles pour la logique de recherche
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  sectionFaded: {
+    opacity: 0.5,
   },
 });
