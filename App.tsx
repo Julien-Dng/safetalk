@@ -780,7 +780,6 @@
 // });
 
 
-
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { StyleSheet, StatusBar } from "react-native";
 import { NavigationContainer, DarkTheme} from "@react-navigation/native";
